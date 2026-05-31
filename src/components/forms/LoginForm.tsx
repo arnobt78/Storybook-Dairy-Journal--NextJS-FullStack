@@ -2,8 +2,8 @@
 
 /**
  * LoginForm — credential sign-in with:
- *  • Demo picker (dev only): portaled menu for test@user.com — hidden in production
- *    unless SHOW_DEMO_LOGIN=true (server flag via getAuthPageConfig).
+ *  • Demo picker (showcase): portaled menu for test@user.com — on by default;
+ *    set SHOW_DEMO_LOGIN=false on server to hide in production.
  *  • Full validation feedback inline (no page reload).
  *  • Clears TanStack Query cache before entering dashboard so stale book data
  *    from a previous session never leaks through.
@@ -26,7 +26,7 @@ const TEST_PASS  = TEST_ACCOUNT_PASSWORD;
 type LoginFormProps = {
   /** From server: true when GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET are set */
   googleEnabled?: boolean;
-  /** From server: dev-only demo picker unless SHOW_DEMO_LOGIN=true */
+  /** From server: demo picker on unless SHOW_DEMO_LOGIN=false */
   demoLoginEnabled?: boolean;
 };
 

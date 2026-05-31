@@ -6,7 +6,7 @@ import { isGoogleOAuthEnabled } from "@/lib/auth/is-google-enabled";
 
 export type AuthPageConfig = {
   googleEnabled: boolean;
-  /** Dev-only demo picker unless SHOW_DEMO_LOGIN=true in production */
+  /** Demo picker on by default; set SHOW_DEMO_LOGIN=false to hide */
   demoLoginEnabled: boolean;
 };
 
