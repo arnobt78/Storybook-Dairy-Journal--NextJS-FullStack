@@ -26,7 +26,7 @@ export default function RegisterPage() {
           fontFamily: "'Playfair Display',serif",
           fontSize: "20px",
           color: "rgba(35,14,3,.85)",
-          margin: "0 0 14px",
+          margin: "0 0 12px",
           lineHeight: 1.2,
         }}
       >

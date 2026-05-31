@@ -57,14 +57,18 @@ src/lib/
   auth.ts                     # NextAuth + Google signIn → provisionOAuthUser
   auth/provision-oauth-user.ts # Google user + welcome journal transaction
   auth/is-google-enabled.ts   # Server-only OAuth env check
+  auth/google-oauth-env.ts    # GOOGLE_CLIENT_* + legacy GOOGLE_ID/SECRET aliases
+  auth/get-auth-page-config.ts # SSR flags for login/register (force-dynamic)
   query-keys.ts               # journalSubtree() — single invalidation root
   validations.ts              # Zod schemas shared by API routes
   utils.ts                    # slugify, tags JSON, word counts, dates
 
 src/components/auth/
+  AuthOAuthSection.tsx        # "or" + Google below primary CTA (login + register)
   GoogleSignInButton.tsx      # OAuth redirect + localStorage anti-flicker flags
   OAuthReturnSync.tsx         # Post-OAuth journalSubtree invalidation
-  AuthOrSeparator.tsx         # "or" divider on login
+  AuthOrSeparator.tsx         # "or" divider
+  AuthBookShell.tsx           # Book spread; prefetches /login ↔ /register
 
 prisma/schema.prisma          # User, JournalBook, JournalEntry (+ relations)
 ```
@@ -90,8 +94,8 @@ Prisma models (`prisma/schema.prisma`):
 - **Proxy** (`src/proxy.ts`, Next.js 16+): uses `auth()` from NextAuth at the edge boundary. Protects `/dashboard` and `/journal`; sends unauthenticated users to `/login` with `callbackUrl`. Matcher **excludes** `api`, `_next/static`, `_next/image`, `favicon.ico` so API routes handle their own auth.
 - **Session strategy:** JWT (`session: { strategy: "jwt" }`). User id is copied from DB user into the token and then into `session.user.id` via callbacks.
 - **Credentials login:** `authorize` loads user by email, bcrypt compare, updates `lastLoginAt`.
-- **Google OAuth:** When `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` (or legacy `GOOGLE_ID` / `GOOGLE_SECRET`) are set, **login and register** show **Open with Gmail** / **Continue with Gmail** at the top of the form. `signIn` callback calls `provisionOAuthUser()` — creates/updates Prisma `User` (cuid), seeds welcome book on first login, maps Google avatar into JWT/session. Redirect lands on `/dashboard`; `OAuthReturnSync` invalidates `journalSubtree()`.
-- **Login UI:** `LoginForm` (credentials + demo picker) + `AuthOrSeparator` + `GoogleSignInButton`. Server gate via `isGoogleOAuthEnabled()` in `login/page.tsx` (`force-dynamic`).
+- **Google OAuth:** When `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` (or legacy `GOOGLE_ID` / `GOOGLE_SECRET`) are set, **login and register** show Gmail **below** the primary button (`Open My Journal` / `Begin My Story`) via `AuthOAuthSection`. `signIn` callback → `provisionOAuthUser()` (Prisma user + welcome book on first login). Redirect `/dashboard`; `OAuthReturnSync` invalidates `journalSubtree()`.
+- **Auth layout:** `(auth)/layout.tsx` uses `.auth-book-viewport` — book spread ≈ **85vw × 85vh** (scoped `--page-w` / `--page-h`; dashboard journal keeps `:root` defaults). Both auth pages use `export const dynamic = "force-dynamic"` + `getAuthPageConfig()`.
 
 API routes consistently call `await auth()` and check `session?.user?.id` before Prisma calls, and use `userId` / `findFirst({ where: { id, userId }})` patterns to avoid cross-user access.
 
@@ -155,8 +159,9 @@ flowchart LR
 1. **`useJournalStore` unused** — journal UI uses React state + TanStack Query; store optional cleanup.
 2. **Demo account on production** — `test@user.com` picker visible on login; gate behind `NODE_ENV` before wide public launch (`.agile-v` RISK-0006).
 3. **Automated tests** — Vitest/Playwright not yet wired (REQ-0021 / Gate 2 pending).
-4. **Register page** — no Google button (login only); add if parity desired.
-5. **Google Console** — origins + redirect URIs must include Vercel URL and localhost.
+4. **`useAutoSave` not mounted** — hook exists with `journalSubtree` invalidation but `BookSpread` uses explicit save only.
+5. **Future phases not implemented** — Redis, BullMQ, SSE/pub-sub, offline IndexedDB (architecture doc only).
+6. **Google Console** — origins + redirect URIs must include Vercel URL and `http://localhost:3000`.
 
 ---
 
