@@ -1,5 +1,5 @@
 import { LoginForm } from "@/components/forms/LoginForm";
-import { isGoogleOAuthEnabled } from "@/lib/auth/is-google-enabled";
+import { getAuthPageConfig } from "@/lib/auth/get-auth-page-config";
 
 export const dynamic = "force-dynamic";
 
@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
  * Login page — server reads OAuth config; interactive form stays client-side.
  */
 export default function LoginPage() {
-  const googleEnabled = isGoogleOAuthEnabled();
+  const { googleEnabled } = getAuthPageConfig();
 
   return (
     <>

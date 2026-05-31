@@ -2,17 +2,20 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { prisma } from "@/lib/db";
+import { getGoogleOAuthEnv } from "@/lib/auth/google-oauth-env";
 import { provisionOAuthUser } from "@/lib/auth/provision-oauth-user";
 import bcrypt from "bcryptjs";
 import type { NextAuthConfig } from "next-auth";
 
+const googleOAuth = getGoogleOAuthEnv();
+
 export const authConfig: NextAuthConfig = {
   providers: [
-    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+    ...(googleOAuth.enabled && googleOAuth.clientId && googleOAuth.clientSecret
       ? [
           Google({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            clientId: googleOAuth.clientId,
+            clientSecret: googleOAuth.clientSecret,
           }),
         ]
       : []),

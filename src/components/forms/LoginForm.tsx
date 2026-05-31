@@ -17,8 +17,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/query-keys";
 
-import { AuthOrSeparator } from "@/components/auth/AuthOrSeparator";
-import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { AuthOAuthSection } from "@/components/auth/AuthOAuthSection";
 import { TEST_ACCOUNT_EMAIL, TEST_ACCOUNT_PASSWORD } from "@/constants/auth";
 
 /** Test account seeded in the database for demos — matches api/auth/register seed logic */
@@ -108,6 +107,8 @@ export function LoginForm({ googleEnabled = false }: LoginFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="auth-form-stagger">
+      <AuthOAuthSection googleEnabled={!!googleEnabled} disabled={loading} variant="login" />
+
       {/* Demo block: section title + full-width trigger; portaled menu lists fill + clear rows. */}
       <div style={{ position: "relative", zIndex: 40, marginBottom: "18px" }}>
         <p
@@ -232,13 +233,6 @@ export function LoginForm({ googleEnabled = false }: LoginFormProps) {
       >
         {loading ? "Opening…" : "Open My Journal"}
       </button>
-
-      {googleEnabled && (
-        <>
-          <AuthOrSeparator label="or" />
-          <GoogleSignInButton disabled={loading} label="Open with Gmail" />
-        </>
-      )}
     </form>
   );
 }

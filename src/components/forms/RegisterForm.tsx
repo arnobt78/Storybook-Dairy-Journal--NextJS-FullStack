@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * RegisterForm — email/password sign-up with optional Google OAuth (same env gate as login).
+ * Invalidates journalSubtree after success so dashboard loads fresh shelves for the new user.
+ */
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -7,7 +11,14 @@ import { signIn } from "next-auth/react";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/query-keys";
 
-export function RegisterForm() {
+import { AuthOAuthSection } from "@/components/auth/AuthOAuthSection";
+
+type RegisterFormProps = {
+  /** From server: true when Google OAuth env vars are set */
+  googleEnabled?: boolean;
+};
+
+export function RegisterForm({ googleEnabled = false }: RegisterFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
@@ -50,6 +61,12 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit} className="auth-form-stagger">
+      <AuthOAuthSection
+        googleEnabled={!!googleEnabled}
+        disabled={loading}
+        variant="register"
+      />
+
       <Field label="Your Name">
         <input
           type="text"

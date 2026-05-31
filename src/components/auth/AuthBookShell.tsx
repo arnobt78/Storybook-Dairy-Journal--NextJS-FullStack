@@ -439,12 +439,14 @@ export function AuthBookShell({ children }: { children: ReactNode }) {
                   position: "relative",
                   zIndex: 12,
                   height: "100%",
-                  overflowY: "visible",
+                  overflowY: "auto",
                   overflowX: "hidden",
                   padding: "28px 32px 28px 28px",
                   boxSizing: "border-box",
                   pointerEvents: "auto",
+                  scrollbarWidth: "none",
                 }}
+                className="auth-right-scroll"
               >
                 {children}
               </div>

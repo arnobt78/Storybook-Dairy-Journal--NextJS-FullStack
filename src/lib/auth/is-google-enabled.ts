@@ -1,10 +1,9 @@
 /**
- * Server-only check: Google OAuth button renders only when both env vars are set.
- * Keeps production builds safe when OAuth is not configured (no dead button).
+ * Server-only check: Google OAuth UI + NextAuth provider when both env vars are set.
+ * Reads canonical or legacy env names via `getGoogleOAuthEnv`.
  */
+import { getGoogleOAuthEnv } from "@/lib/auth/google-oauth-env";
+
 export function isGoogleOAuthEnabled(): boolean {
-  return Boolean(
-    process.env.GOOGLE_CLIENT_ID?.trim() &&
-      process.env.GOOGLE_CLIENT_SECRET?.trim()
-  );
+  return getGoogleOAuthEnv().enabled;
 }

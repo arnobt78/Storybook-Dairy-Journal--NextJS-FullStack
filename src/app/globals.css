@@ -259,6 +259,11 @@ body {
   animation-delay: 0.4s;
 }
 
+/* Auth right page — scroll when OAuth + demo + fields exceed page height */
+.auth-right-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 /* ─── Page-turn content stagger (diary entries) ──────────────── */
 /* Applied via .page-stagger-fwd/.page-stagger-bwd on right-page content wrapper. */
 /* Lines slide in from right (fwd) or left (bwd) after the 650ms flip completes.  */
