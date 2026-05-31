@@ -157,8 +157,9 @@ flowchart LR
 
 1. **Automated tests** — Vitest/Playwright not yet wired (REQ-0021 / Gate 2 pending).
 2. **Future phases not implemented** — Redis, BullMQ, SSE/pub-sub, offline IndexedDB (architecture doc only).
-3. **Demo login opt-out** — picker on by default; set `SHOW_DEMO_LOGIN=false` to hide on public deploys.
-4. **Google Console** — origins + redirect URIs must include Vercel URL and `http://localhost:3000`.
+3. **Demo login** — on by default (showcase); `SHOW_DEMO_LOGIN=false` to hide.
+4. **DELETE UI** — API routes for book/entry delete exist; no client UI wired yet.
+5. **Google Console** — origins + redirect URIs must include Vercel URL and `http://localhost:3000`.
 
 ---
 
