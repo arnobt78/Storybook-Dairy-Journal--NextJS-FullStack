@@ -27,7 +27,6 @@ Deployment target is **Vercel** for the app; `docker-compose.yml` is an optional
 | ORM / DB | **Prisma 6** + **PostgreSQL** (`DATABASE_URL` + `DIRECT_URL`) |
 | Validation | **Zod** (`src/lib/validations.ts`) |
 | Client data fetching | **TanStack Query** — `queryKeys.journalSubtree()` invalidation on all journal CRUD + auth flows |
-| Global client store | **Zustand** (`src/stores/journalStore.ts`) — defined but unused (see §8) |
 | Animations | Custom page-flip hook + overlay (`usePageFlip`, `PageFlip`) |
 | Toasts | **Sonner** |
 | AI | Server proxy `/api/ai/assist` (Anthropic key server-only) |
@@ -120,7 +119,7 @@ API routes consistently call `await auth()` and check `session?.user?.id` before
 2. `BookSpread` (client) holds **entries**, current index, write mode, draft, save state. It:
    - **Patches** the current entry via `PATCH /api/entries/[entryId]` on explicit save.
    - **Posts** new entries via `POST /api/entries` with client-supplied `entryDate` / `weekday` (API overwrites with `formatEntryDate()` anyway — minor redundancy).
-3. `useAutoSave` exists for debounced PATCH to `/api/entries/[id]`; confirm it is mounted where needed if you rely on autosave (it is not central to `BookSpread`’s main save path in the audited flow).
+3. `useAutoSave` in `BookSpread` debounces PATCH while editing; explicit Save still available.
 
 ### 6.4 API summary
 
@@ -156,12 +155,10 @@ flowchart LR
 
 ## 8. Audit notes (risks / cleanup candidates)
 
-1. **`useJournalStore` unused** — journal UI uses React state + TanStack Query; store optional cleanup.
-2. **Demo account on production** — `test@user.com` picker visible on login; gate behind `NODE_ENV` before wide public launch (`.agile-v` RISK-0006).
-3. **Automated tests** — Vitest/Playwright not yet wired (REQ-0021 / Gate 2 pending).
-4. **`useAutoSave` not mounted** — hook exists with `journalSubtree` invalidation but `BookSpread` uses explicit save only.
-5. **Future phases not implemented** — Redis, BullMQ, SSE/pub-sub, offline IndexedDB (architecture doc only).
-6. **Google Console** — origins + redirect URIs must include Vercel URL and `http://localhost:3000`.
+1. **Automated tests** — Vitest/Playwright not yet wired (REQ-0021 / Gate 2 pending).
+2. **Future phases not implemented** — Redis, BullMQ, SSE/pub-sub, offline IndexedDB (architecture doc only).
+3. **Demo login override** — production hides demo picker; set `SHOW_DEMO_LOGIN=true` to re-enable.
+4. **Google Console** — origins + redirect URIs must include Vercel URL and `http://localhost:3000`.
 
 ---
 

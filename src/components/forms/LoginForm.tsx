@@ -2,9 +2,8 @@
 
 /**
  * LoginForm — credential sign-in with:
- *  • Demo picker: portaled menu lists `Test User (test@user.com)` to fill seeded
- *    credentials and `Clear Section` to reset fields; `createPortal` + `position: fixed`
- *    from `getBoundingClientRect()` avoids transform/overflow issues from the auth shell.
+ *  • Demo picker (dev only): portaled menu for test@user.com — hidden in production
+ *    unless SHOW_DEMO_LOGIN=true (server flag via getAuthPageConfig).
  *  • Full validation feedback inline (no page reload).
  *  • Clears TanStack Query cache before entering dashboard so stale book data
  *    from a previous session never leaks through.
@@ -27,9 +26,11 @@ const TEST_PASS  = TEST_ACCOUNT_PASSWORD;
 type LoginFormProps = {
   /** From server: true when GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET are set */
   googleEnabled?: boolean;
+  /** From server: dev-only demo picker unless SHOW_DEMO_LOGIN=true */
+  demoLoginEnabled?: boolean;
 };
 
-export function LoginForm({ googleEnabled = false }: LoginFormProps) {
+export function LoginForm({ googleEnabled = false, demoLoginEnabled = false }: LoginFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
@@ -107,8 +108,9 @@ export function LoginForm({ googleEnabled = false }: LoginFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="auth-form-stagger">
-      {/* Demo block: section title + full-width trigger; portaled menu lists fill + clear rows. */}
+      {demoLoginEnabled && (
       <div style={{ position: "relative", zIndex: 40, marginBottom: "12px" }} className="auth-field-compact">
+        {/* Demo block: portaled menu fills test@user.com credentials or clears fields */}
         <p
           style={{
             fontFamily: "'Lora',serif",
@@ -192,6 +194,7 @@ export function LoginForm({ googleEnabled = false }: LoginFormProps) {
           document.body
         )}
       </div>
+      )}
 
       <Field label="Email">
         <input

@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
  * Login page — server reads OAuth config; interactive form stays client-side.
  */
 export default function LoginPage() {
-  const { googleEnabled } = getAuthPageConfig();
+  const { googleEnabled, demoLoginEnabled } = getAuthPageConfig();
 
   return (
     <>
@@ -34,7 +34,7 @@ export default function LoginPage() {
       >
         Open your journal
       </h2>
-      <LoginForm googleEnabled={googleEnabled} />
+      <LoginForm googleEnabled={googleEnabled} demoLoginEnabled={demoLoginEnabled} />
     </>
   );
 }

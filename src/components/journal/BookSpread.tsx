@@ -6,6 +6,7 @@
  * Architecture:
  *  • TanStack Query (`useQuery`) hydrates from SSR `initialBook` and keeps the
  *    cache fresh after mutations (invalidateQueries on save/new entry).
+ *  • `useAutoSave` debounces PATCH while in write mode (2s) + journalSubtree invalidation.
  *  • Books created via POST /api/books include a starter entry so `current` is never
  *    missing on first paint. Legacy books with zero entries show a one-tap seed UI.
  *  • `flipDir` is forwarded to RightPage so it can apply the correct CSS stagger
@@ -25,6 +26,7 @@ import { LeftPage } from "./LeftPage";
 import { RightPage } from "./RightPage";
 import { PageFlipOverlay } from "./PageFlip";
 import { usePageFlip } from "@/hooks/usePageFlip";
+import { useAutoSave } from "@/hooks/useAutoSave";
 import { formatEntryDate } from "@/lib/utils";
 import { queryKeys } from "@/lib/query-keys";
 import { fetchJournalBook } from "@/lib/journal-api";
@@ -82,6 +84,19 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
 
   const current = entries[currentIdx];
   const prev = currentIdx > 0 ? entries[currentIdx - 1] : null;
+
+  const autoSavePayload = useMemo(
+    () => ({ ...draft, tags: draft.tags }),
+    [draft],
+  );
+
+  /* Debounced PATCH while editing — pauses during explicit save or when not in write mode */
+  useAutoSave({
+    entryId: current?.id ?? "",
+    bookId,
+    data: autoSavePayload,
+    enabled: isWriting && !isSaving && Boolean(current?.id),
+  });
 
   const navigate = useCallback(
     (targetIdx: number) => {

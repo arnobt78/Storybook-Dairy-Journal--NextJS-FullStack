@@ -17,6 +17,7 @@ interface UseAutoSaveOptions {
 /**
  * Debounced PATCH to `/api/entries/[entryId]`; on success invalidates the shared
  * `journalSubtree` cache so shelf + reader views refetch without navigation.
+ * Baseline snapshot on write-mode open avoids PATCH when the draft is unchanged.
  */
 export function useAutoSave({
   entryId,
@@ -29,6 +30,19 @@ export function useAutoSave({
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSaving = useRef(false);
   const previousData = useRef<string>("");
+  const wasEnabled = useRef(false);
+
+  /* Seed baseline when edit mode opens so opening write mode does not trigger a noop PATCH. */
+  useEffect(() => {
+    if (enabled && entryId) {
+      if (!wasEnabled.current) {
+        previousData.current = JSON.stringify(data);
+      }
+    } else {
+      previousData.current = "";
+    }
+    wasEnabled.current = enabled;
+  }, [enabled, entryId, data]);
 
   useEffect(() => {
     if (!enabled || !entryId) return;
@@ -52,7 +66,6 @@ export function useAutoSave({
 
         if (!res.ok) throw new Error("Save failed");
 
-        /* PATCH always affects counts or body somewhere under /journal — refresh the whole journal cache tree */
         void queryClient.invalidateQueries({ queryKey: queryKeys.journalSubtree() });
 
         toast.success("Saved", {
