@@ -1,0 +1,507 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IM+Fell+English:ital@0;1&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Design tokens ──────────────────────────────────────────────
+   --page-w / --page-h drive the responsive book size everywhere.
+   Adjust clamp() to taste; current values give ~85% screen fill
+   on a 1440px display and degrade gracefully to 1024px.
+───────────────────────────────────────────────────────────────── */
+:root {
+  --page-w: clamp(280px, 41vw, 450px);
+  --page-h: clamp(420px, 57vh, 576px);
+  --spine-w: 22px;
+
+  --paper-bg: #f4ecda;
+  --paper-alt: #ede1cc;
+  --paper-dark: #e0d0b4;
+  --leather-darkest: #2e1005;
+  --leather-dark: #5d2e0c;
+  --leather-mid: #8b4513;
+  --leather-light: #d2691e;
+  --ink-primary: rgba(35, 14, 3, 0.82);
+  --ink-secondary: rgba(55, 28, 8, 0.6);
+  --ink-faint: rgba(100, 55, 20, 0.38);
+  --ink-ghost: rgba(100, 55, 20, 0.25);
+  --rule-line: rgba(120, 80, 30, 0.1);
+  --margin-line: rgba(220, 100, 80, 0.18);
+  --gold: rgba(255, 180, 80, 0.8);
+  --gold-faint: rgba(255, 170, 70, 0.35);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  background: radial-gradient(
+    ellipse at 50% 30%,
+    #2e160a 0%,
+    #1a0c05 55%,
+    #0e0603 100%
+  );
+  font-family: "Lora", serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Scrollbars ─────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(120, 70, 20, 0.25);
+  border-radius: 2px;
+}
+
+/* ─── TipTap / ProseMirror ───────────────────────────────────── */
+.ProseMirror {
+  outline: none;
+  font-family: "Lora", serif;
+  font-size: 13.5px;
+  line-height: 1.92;
+  color: var(--ink-primary);
+  background: transparent;
+  min-height: 120px;
+  width: 100%;
+}
+.ProseMirror > * + * {
+  margin-top: 0.5em;
+}
+.ProseMirror p {
+  margin: 0 0 0.4em;
+}
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: rgba(100, 55, 20, 0.28);
+  font-style: italic;
+  pointer-events: none;
+  height: 0;
+}
+.ProseMirror h1 {
+  font-family: "Playfair Display", serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin: 0.6em 0 0.3em;
+}
+.ProseMirror h2 {
+  font-family: "Playfair Display", serif;
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin: 0.5em 0 0.25em;
+}
+.ProseMirror blockquote {
+  border-left: 2px solid rgba(120, 70, 20, 0.3);
+  padding-left: 1em;
+  margin: 0.5em 0;
+  font-style: italic;
+  color: var(--ink-secondary);
+}
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 1.4em;
+  margin: 0.3em 0;
+}
+.ProseMirror li {
+  margin: 0.15em 0;
+}
+.ProseMirror strong {
+  font-weight: 600;
+}
+.ProseMirror em {
+  font-style: italic;
+}
+.ProseMirror code {
+  background: rgba(120, 70, 20, 0.08);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.ProseMirror pre {
+  background: rgba(35, 14, 3, 0.06);
+  border-radius: 4px;
+  padding: 0.75em 1em;
+  overflow-x: auto;
+  margin: 0.5em 0;
+}
+.ProseMirror a {
+  color: var(--leather-mid);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ─── Dashboard scroll ───────────────────────────────────────── */
+.dashboard-scroll {
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 70, 20, 0.2) transparent;
+}
+
+/* ─── Book shine sweep (landing cover) ───────────────────────── */
+@keyframes bookShineSweep {
+  0% {
+    transform: translateX(-160%) skewX(-15deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(260%) skewX(-15deg);
+    opacity: 0;
+  }
+}
+.cover-shine::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 55%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 200, 100, 0.1) 40%,
+    rgba(255, 230, 150, 0.18) 50%,
+    rgba(255, 200, 100, 0.1) 60%,
+    transparent 100%
+  );
+  animation: bookShineSweep 4s cubic-bezier(0.35, 0, 0.15, 1) infinite;
+  pointer-events: none;
+  z-index: 8;
+  border-radius: inherit;
+}
+
+/* ─── Auth reveal stagger (left page text blocks) ────────────── */
+@keyframes authReveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.auth-stagger > * {
+  animation: authReveal 0.42s ease-out both;
+}
+.auth-stagger > *:nth-child(1) {
+  animation-delay: 0s;
+}
+.auth-stagger > *:nth-child(2) {
+  animation-delay: 0.06s;
+}
+.auth-stagger > *:nth-child(3) {
+  animation-delay: 0.12s;
+}
+.auth-stagger > *:nth-child(4) {
+  animation-delay: 0.18s;
+}
+.auth-stagger > *:nth-child(5) {
+  animation-delay: 0.24s;
+}
+.auth-stagger > *:nth-child(6) {
+  animation-delay: 0.3s;
+}
+.auth-stagger > *:nth-child(7) {
+  animation-delay: 0.36s;
+}
+.auth-stagger > *:nth-child(8) {
+  animation-delay: 0.42s;
+}
+.auth-stagger > *:nth-child(9) {
+  animation-delay: 0.48s;
+}
+.auth-stagger > *:nth-child(10) {
+  animation-delay: 0.54s;
+}
+
+.auth-form-stagger > * {
+  animation: authReveal 0.4s ease-out both;
+}
+.auth-form-stagger > *:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.auth-form-stagger > *:nth-child(2) {
+  animation-delay: 0.12s;
+}
+.auth-form-stagger > *:nth-child(3) {
+  animation-delay: 0.19s;
+}
+.auth-form-stagger > *:nth-child(4) {
+  animation-delay: 0.26s;
+}
+.auth-form-stagger > *:nth-child(5) {
+  animation-delay: 0.33s;
+}
+.auth-form-stagger > *:nth-child(6) {
+  animation-delay: 0.4s;
+}
+
+/* ─── Page-turn content stagger (diary entries) ──────────────── */
+/* Applied via .page-stagger-fwd/.page-stagger-bwd on right-page content wrapper. */
+/* Lines slide in from right (fwd) or left (bwd) after the 650ms flip completes.  */
+@keyframes lineInRight {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes lineInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Each direct child of the stagger wrapper gets a cascading delay */
+.page-stagger-fwd > *,
+.page-stagger-bwd > * {
+  opacity: 0;
+}
+.page-stagger-fwd > * {
+  animation: lineInRight 0.36s ease-out both;
+}
+.page-stagger-bwd > * {
+  animation: lineInLeft 0.36s ease-out both;
+}
+
+/* Delays start after flip ends (0.65s) then stagger by 70ms per child */
+.page-stagger-fwd > *:nth-child(1),
+.page-stagger-bwd > *:nth-child(1) {
+  animation-delay: 0.66s;
+}
+.page-stagger-fwd > *:nth-child(2),
+.page-stagger-bwd > *:nth-child(2) {
+  animation-delay: 0.73s;
+}
+.page-stagger-fwd > *:nth-child(3),
+.page-stagger-bwd > *:nth-child(3) {
+  animation-delay: 0.8s;
+}
+.page-stagger-fwd > *:nth-child(4),
+.page-stagger-bwd > *:nth-child(4) {
+  animation-delay: 0.87s;
+}
+.page-stagger-fwd > *:nth-child(5),
+.page-stagger-bwd > *:nth-child(5) {
+  animation-delay: 0.94s;
+}
+.page-stagger-fwd > *:nth-child(6),
+.page-stagger-bwd > *:nth-child(6) {
+  animation-delay: 1.01s;
+}
+.page-stagger-fwd > *:nth-child(7),
+.page-stagger-bwd > *:nth-child(7) {
+  animation-delay: 1.08s;
+}
+.page-stagger-fwd > *:nth-child(8),
+.page-stagger-bwd > *:nth-child(8) {
+  animation-delay: 1.15s;
+}
+.page-stagger-fwd > *:nth-child(9),
+.page-stagger-bwd > *:nth-child(9) {
+  animation-delay: 1.22s;
+}
+.page-stagger-fwd > *:nth-child(10),
+.page-stagger-bwd > *:nth-child(10) {
+  animation-delay: 1.29s;
+}
+.page-stagger-fwd > *:nth-child(n + 11),
+.page-stagger-bwd > *:nth-child(n + 11) {
+  animation-delay: 1.36s;
+}
+
+/* ─── Left-page entry list stagger ──────────────────────────── */
+@keyframes listItemIn {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.entry-list-stagger > * {
+  animation: listItemIn 0.3s ease-out both;
+}
+.entry-list-stagger > *:nth-child(1) {
+  animation-delay: 0.68s;
+}
+.entry-list-stagger > *:nth-child(2) {
+  animation-delay: 0.74s;
+}
+.entry-list-stagger > *:nth-child(3) {
+  animation-delay: 0.8s;
+}
+.entry-list-stagger > *:nth-child(4) {
+  animation-delay: 0.86s;
+}
+.entry-list-stagger > *:nth-child(5) {
+  animation-delay: 0.92s;
+}
+.entry-list-stagger > *:nth-child(6) {
+  animation-delay: 0.98s;
+}
+.entry-list-stagger > *:nth-child(7) {
+  animation-delay: 1.04s;
+}
+.entry-list-stagger > *:nth-child(n + 8) {
+  animation-delay: 1.1s;
+}
+
+/* ─── Book close overlay (logout animation) ──────────────────── */
+@keyframes bookCoverClose {
+  0% {
+    transform: perspective(900px) rotateY(0deg) scaleX(1);
+    opacity: 1;
+  }
+  40% {
+    transform: perspective(900px) rotateY(-25deg) scaleX(0.92);
+  }
+  100% {
+    transform: perspective(900px) rotateY(-88deg) scaleX(0.1);
+    opacity: 0.4;
+  }
+}
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes overlayFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.book-close-overlay {
+  animation: overlayFadeIn 0.3s ease-out forwards;
+}
+.book-close-overlay.closing {
+  animation: overlayFadeOut 0.4s ease-in forwards;
+}
+.book-close-cover {
+  animation: bookCoverClose 0.75s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ─── Ripple button effect ───────────────────────────────────── */
+/* Used by NavBtn and other interactive elements; ripple span injected via JS */
+.ripple-btn {
+  position: relative;
+  overflow: hidden;
+}
+@keyframes rippleExpand {
+  from {
+    transform: scale(0);
+    opacity: 0.4;
+  }
+  to {
+    transform: scale(3.5);
+    opacity: 0;
+  }
+}
+.ripple-wave {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 200, 100, 0.35);
+  pointer-events: none;
+  animation: rippleExpand 0.55s ease-out forwards;
+  transform-origin: center;
+}
+
+/* ─── Misc utilities ─────────────────────────────────────────── */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(120, 70, 20, 0.06) 25%,
+    rgba(120, 70, 20, 0.12) 50%,
+    rgba(120, 70, 20, 0.06) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
+  border-radius: 3px;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-up {
+  animation: fadeUp 0.38s ease forwards;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
+.breathe {
+  animation: breathe 2.6s ease-in-out infinite;
+}
+
+@keyframes floatY {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+.float-y {
+  animation: floatY 4s ease-in-out infinite;
+}

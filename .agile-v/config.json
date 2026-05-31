@@ -1,0 +1,44 @@
+{
+  "$schema": "agile-v-config-v1",
+  "project": {
+    "name": "storybook-journal",
+    "display_name": "StoryBook Journal",
+    "repository": "storybook-journal",
+    "cycle": "C1",
+    "tech_stack": [
+      "Next.js 16 App Router",
+      "React 19",
+      "TypeScript",
+      "Prisma PostgreSQL",
+      "TanStack Query",
+      "NextAuth v5",
+      "Tailwind CSS"
+    ]
+  },
+  "paths": {
+    "requirements": ".agile-v/REQUIREMENTS.md",
+    "decision_log": ".agile-v/DECISION_LOG.md",
+    "validation_summary": ".agile-v/VALIDATION_SUMMARY.md",
+    "build_manifest": ".agile-v/BUILD_MANIFEST.md",
+    "test_spec": ".agile-v/TEST_SPEC.md",
+    "source_root": "src/"
+  },
+  "authority_matrix": {
+    "gate_1_approver_roles": ["Product Owner", "Tech Lead"],
+    "gate_2_approver_roles": ["Product Owner", "Release Manager"]
+  },
+  "llm_provider_registry": [
+    {
+      "name": "cursor-default",
+      "models": ["agent-router"],
+      "approved_for": ["design", "implementation", "review"],
+      "data_residency": "user-controlled",
+      "review_date": "2026-03-16"
+    }
+  ],
+  "model_versions": {
+    "requirement_architect": { "tier": "high", "last_validated": "2026-03-16", "validated_by": "bootstrap" },
+    "build_agent_js": { "tier": "medium", "last_validated": "2026-03-16", "validated_by": "bootstrap" },
+    "red_team_verifier": { "tier": "medium", "last_validated": "2026-03-16", "validated_by": "bootstrap" }
+  }
+}

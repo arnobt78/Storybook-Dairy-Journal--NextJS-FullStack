@@ -1,0 +1,50 @@
+# Agile V policy-as-code — storybook-journal C1
+# Version: 1.0.0 | Cycle: C1
+
+version: "1.0.0"
+cycle: C1
+project: storybook-journal
+
+traceability:
+  require_parent_req: true
+  req_id_pattern: "REQ-[0-9]{4}"
+  artifact_id_pattern: "ART-[0-9]{4}"
+  test_id_pattern: "TC-[0-9]{4}"
+
+gates:
+  gate_1:
+    required_artifacts:
+      - REQUIREMENTS.md
+      - RISK_REGISTER.md
+    human_approval: true
+  gate_2:
+    required_artifacts:
+      - VALIDATION_SUMMARY.md
+      - EVAL_RESULTS.md
+      - BUILD_MANIFEST.md
+      - TEST_SPEC.md
+    eval_gate_status_must_be: PASS_OR_WAIVED
+    human_approval: true
+
+hitl:
+  checkpoint_file: CHECKPOINTS.md
+  approvals_file: APPROVALS.md
+  resume_requires_matching_token: true
+
+quality:
+  no_self_verification: true
+  invalidate_query_on_crud: true  # TanStack Query journalSubtree pattern
+  hydration_safe_ui: true
+
+security:
+  secrets_in_env_only: true
+  no_credentials_in_client: true
+  api_keys_server_only: true
+
+documentation:
+  append_only_logs:
+    - DECISION_LOG.md
+    - TRACE_LOG.md
+    - CHANGE_LOG.md
+    - CAPA_LOG.md
+    - APPROVALS.md

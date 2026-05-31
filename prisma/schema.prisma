@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  passwordHash    String?
+  displayName     String?
+  avatarUrl       String?
+  bio             String?
+  timezone        String   @default("UTC")
+  locale          String   @default("en")
+  themePreference String   @default("warm-paper")
+  role            String   @default("user")
+  status          String   @default("active")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  lastLoginAt     DateTime?
+
+  books   JournalBook[]
+  entries JournalEntry[]
+}
+
+model JournalBook {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  slug        String
+  coverColor  String   @default("#8b4513")
+  coverEmoji  String   @default("📖")
+  theme       String   @default("warm-paper")
+  description String?
+  visibility  String   @default("private")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries JournalEntry[]
+
+  @@unique([userId, slug])
+  @@index([userId])
+}
+
+model JournalEntry {
+  id          String    @id @default(cuid())
+  userId      String
+  bookId      String
+  title       String    @default("Untitled Entry")
+  slug        String
+  content     String    @default("")
+  excerpt     String?
+  mood        String    @default("✨")
+  weather     String    @default("☀️")
+  location    String?
+  tags        String    @default("[]")
+  wordCount   Int       @default(0)
+  readingTime Int       @default(0)
+  isFavorite  Boolean   @default(false)
+  isArchived  Boolean   @default(false)
+  entryDate   String
+  weekday     String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book JournalBook @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, slug])
+  @@index([userId])
+  @@index([bookId])
+  @@index([createdAt])
+}

@@ -1,0 +1,32 @@
+# Optional local PostgreSQL for development only.
+#
+# This repo deploys the Next.js app on Vercel — not via Docker.
+# Use this file only if you want a Postgres instance on your machine
+# instead of pointing .env at a remote/hosted database.
+#
+# Start:  docker compose up -d db
+# Stop:   docker compose down
+# Then set in .env (see .env.example):
+#   DATABASE_URL="postgresql://postgres:postgres@localhost:5432/storybook"
+#   DIRECT_URL="postgresql://postgres:postgres@localhost:5432/storybook"
+# Then:   npx prisma generate && npm run db:push && npm run db:seed
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: storybook
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d storybook"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
