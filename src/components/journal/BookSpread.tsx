@@ -8,6 +8,7 @@
  *    cache fresh after mutations (invalidateQueries on save/new entry).
  *  • DELETE entry/book via shared ConfirmDialog + journal-api helpers;
  *    journalSubtree invalidation keeps shelf + reader in sync without reload.
+ *  • PATCH book metadata via BookEditorModal (shelf ✎ or reader “Edit journal”).
  *  • Books created via POST /api/books include a starter entry so `current` is never
  *    missing on first paint. Legacy books with zero entries show a one-tap seed UI.
  *  • `flipDir` is forwarded to RightPage so it can apply the correct CSS stagger
@@ -24,6 +25,7 @@ import Image from "next/image";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/feedback/ConfirmDialog";
+import { BookEditorModal } from "@/components/journal/BookEditorModal";
 import { LeftPage } from "./LeftPage";
 import { RightPage } from "./RightPage";
 import { PageFlipOverlay } from "./PageFlip";
@@ -31,8 +33,9 @@ import { usePageFlip } from "@/hooks/usePageFlip";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { formatEntryDate } from "@/lib/utils";
 import { queryKeys } from "@/lib/query-keys";
-import { fetchJournalBook, deleteJournalBook, deleteJournalEntry } from "@/lib/journal-api";
+import { fetchJournalBook, deleteJournalBook, deleteJournalEntry, updateJournalBook } from "@/lib/journal-api";
 import type { JournalBook, JournalEntry, EntryDraft } from "@/types";
+import { bookToFormValues, type BookFormValues } from "@/types/book-form";
 import type { FlipDirection } from "@/types";
 
 export interface BookSpreadProps {
@@ -64,7 +67,9 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
   const [isAiThinking, setIsAiThinking] = useState(false);
   const [confirmDeleteEntry, setConfirmDeleteEntry] = useState(false);
   const [confirmDeleteBook, setConfirmDeleteBook] = useState(false);
+  const [showEditBook, setShowEditBook] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSavingBook, setIsSavingBook] = useState(false);
   const [draft, setDraft] = useState<EntryDraft>({
     title: "",
     content: "",
@@ -290,6 +295,22 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
     }
   };
 
+  /** PATCH journal metadata — spine color/title update live via useQuery refetch */
+  const handleUpdateBook = async (values: BookFormValues) => {
+    if (isSavingBook || isFlipping) return;
+    setIsSavingBook(true);
+    try {
+      await updateJournalBook(bookId, values);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.journalSubtree() });
+      setShowEditBook(false);
+      toast.success("Journal updated");
+    } catch {
+      toast.error("Failed to update journal");
+    } finally {
+      setIsSavingBook(false);
+    }
+  };
+
   if (!entries.length) {
     return (
       <>
@@ -340,6 +361,28 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
           </button>
           <button
             type="button"
+            onClick={() => setShowEditBook(true)}
+            disabled={isFlipping || isWriting || isSavingBook}
+            style={{
+              display: "block",
+              margin: "12px auto 0",
+              fontFamily: "'Lora',serif",
+              fontSize: "10px",
+              letterSpacing: "1.5px",
+              textTransform: "uppercase",
+              background: "rgba(160,85,30,.22)",
+              color: "rgba(255,185,100,.65)",
+              border: "1px solid rgba(160,85,30,.28)",
+              padding: "8px 16px",
+              borderRadius: "20px",
+              cursor: "pointer",
+              opacity: isFlipping || isWriting || isSavingBook ? 0.45 : 1,
+            }}
+          >
+            Edit journal
+          </button>
+          <button
+            type="button"
             onClick={() => setConfirmDeleteBook(true)}
             disabled={isFlipping || isWriting || isDeleting}
             style={{
@@ -361,6 +404,15 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
             Remove journal
           </button>
         </div>
+        <BookEditorModal
+          key={`edit-${bookId}-${showEditBook}`}
+          open={showEditBook}
+          mode="edit"
+          initialValues={bookToFormValues(book)}
+          loading={isSavingBook}
+          onClose={() => !isSavingBook && setShowEditBook(false)}
+          onSubmit={(values) => void handleUpdateBook(values)}
+        />
         <ConfirmDialog
           open={confirmDeleteBook}
           variant="dark"
@@ -524,6 +576,27 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
           <Divider />
           <button
             type="button"
+            onClick={() => setShowEditBook(true)}
+            disabled={isFlipping || isWriting || isSavingBook || isDeleting}
+            title="Edit journal"
+            style={{
+              fontFamily: "'Lora',serif",
+              fontSize: "9px",
+              letterSpacing: "1.5px",
+              textTransform: "uppercase",
+              background: "rgba(160,85,30,.18)",
+              color: "rgba(255,185,100,.6)",
+              border: "1px solid rgba(160,85,30,.25)",
+              padding: "5px 12px",
+              borderRadius: "20px",
+              cursor: "pointer",
+              opacity: isFlipping || isWriting || isSavingBook || isDeleting ? 0.35 : 1,
+            }}
+          >
+            Edit journal
+          </button>
+          <button
+            type="button"
             onClick={() => setConfirmDeleteBook(true)}
             disabled={isFlipping || isWriting || isDeleting}
             title="Remove journal"
@@ -545,6 +618,15 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
           </button>
         </div>
 
+        <BookEditorModal
+          key={`edit-${bookId}-${showEditBook}`}
+          open={showEditBook}
+          mode="edit"
+          initialValues={bookToFormValues(book)}
+          loading={isSavingBook}
+          onClose={() => !isSavingBook && setShowEditBook(false)}
+          onSubmit={(values) => void handleUpdateBook(values)}
+        />
         <ConfirmDialog
           open={confirmDeleteEntry}
           variant="dark"

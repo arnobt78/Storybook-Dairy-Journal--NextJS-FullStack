@@ -121,6 +121,7 @@ API routes consistently call `await auth()` and check `session?.user?.id` before
    - **Posts** new entries via `POST /api/entries` with client-supplied `entryDate` / `weekday` (API overwrites with `formatEntryDate()` anyway — minor redundancy).
 3. `useAutoSave` in `BookSpread` debounces PATCH while editing; explicit Save still available.
 4. **DELETE UI** — `BookShelf` spine × and reader “Remove page/journal” use `ConfirmDialog` + `journalSubtree` invalidation.
+5. **PATCH book UI** — shared `BookEditorModal` on shelf (hover ✎) and reader (“Edit journal”); `updateJournalBook` + `journalSubtree` invalidation.
 
 ### 6.4 API summary
 
