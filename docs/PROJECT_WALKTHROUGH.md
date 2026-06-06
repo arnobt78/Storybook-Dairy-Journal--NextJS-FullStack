@@ -271,6 +271,8 @@ flowchart LR
 5. **Journal chrome** — `.leather-glass-nav-pill` on spread nav; `.leather-glass-action-btn` on footers; paper pages stay flat (no blur).
 6. **Dev** — `next.config.ts` immutable `Cache-Control` on `/_next/static` production-only (fixes lucide HMR stale chunk in dev).
 
+**Audit (2026-06-01):** Plan phases W1–W6 complete. No invalidation/SSR/query regressions. `lint` · `typecheck` · 12 vitest · `build` pass (`rm -rf .next` if dev server holds lock). Optional cosmetic: demo row could add `·` between name/email. Commit `859de14`.
+
 ---
 
 ## 10. SQLite vs PostgreSQL on the VPS (recommendation)
