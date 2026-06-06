@@ -50,6 +50,7 @@ export default async function JournalPage({ params }: PageProps) {
   return (
     // Fixed viewport — matches journal reading mode (no document scroll)
     <div
+      className="book-viewport-80"
       style={{
         position: "fixed",
         inset: 0,

@@ -33,6 +33,8 @@
 import type { CSSProperties } from "react";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { LogIn, PenLine } from "lucide-react";
+import { TypewriterText } from "@/components/animations/TypewriterText";
 import { RippleButton } from "@/components/ui/ripple-button";
 
 /** Total ms the cover animation plays before router.push fires. */
@@ -77,6 +79,7 @@ export function LandingCover() {
 
   return (
     <div
+      className="landing-cover-viewport"
       style={{
         position: "fixed",
         inset: 0,
@@ -130,7 +133,9 @@ export function LandingCover() {
            z-index 3 sits above the page-bg (1) and fold-inner (2). */
         .cover-hinge {
           position: absolute;
-          top: 0; bottom: 0; left: 26px; right: 0;
+          top: 0; bottom: 0;
+          left: calc(var(--cover-w) * 26 / 240);
+          right: 0;
           transform-origin: left center;
           transform-style: preserve-3d;
           z-index: 3;
@@ -153,7 +158,9 @@ export function LandingCover() {
 
         /* ── Inner fold sheets (behind the hinge) ── */
         .cover-fold-inner {
-          position: absolute; left: 28px; right: 14px;
+          position: absolute;
+          left: calc(var(--cover-w) * 28 / 240);
+          right: calc(var(--cover-w) * 14 / 240);
           top: 16px; bottom: 16px;
           z-index: 2; pointer-events: none;
           perspective: 900px; transform-style: preserve-3d;
@@ -192,8 +199,8 @@ export function LandingCover() {
         <div
           className={`cover-book${coverOpening ? " cover-book-opening" : ""}`}
           style={{
-            width: "240px",
-            height: "340px",
+            width: "var(--cover-w)",
+            height: "var(--cover-h)",
             position: "relative",
             borderRadius: "3px 14px 14px 3px",
             boxShadow:
@@ -208,7 +215,7 @@ export function LandingCover() {
               left: 0,
               top: 0,
               bottom: 0,
-              width: "26px",
+              width: "calc(var(--cover-w) * 26 / 240)",
               background:
                 "linear-gradient(90deg,#1e0c03 0%,#4a2008 40%,#6b3410 60%,#4a2008 100%)",
               borderRadius: "3px 0 0 3px",
@@ -222,7 +229,7 @@ export function LandingCover() {
               position: "absolute",
               top: 0,
               bottom: 0,
-              left: "26px",
+              left: "calc(var(--cover-w) * 26 / 240)",
               right: 0,
               background:
                 "linear-gradient(180deg, #f7f0e2 0%, #f0e6d4 50%, #e8dcc9 100%)",
@@ -311,7 +318,7 @@ export function LandingCover() {
                 <div
                   className="float-y"
                   style={{
-                    fontSize: "26px",
+                    fontSize: "clamp(22px, calc(var(--cover-w) * 0.11), 42px)",
                     opacity: 0.55,
                     filter: "sepia(1) brightness(.8)",
                   }}
@@ -322,10 +329,10 @@ export function LandingCover() {
                   style={{
                     fontFamily: "'Playfair Display', serif",
                     fontStyle: "italic",
-                    fontSize: "26px",
+                    fontSize: "clamp(22px, calc(var(--cover-w) * 0.108), 40px)",
                     color: "rgba(255,205,130,.88)",
                     textAlign: "center",
-                    padding: "0 36px",
+                    padding: "0 12%",
                     lineHeight: 1.25,
                     textShadow: "0 3px 12px rgba(0,0,0,.5)",
                     margin: "10px 0",
@@ -337,10 +344,10 @@ export function LandingCover() {
                   style={{
                     fontFamily: "'Playfair Display', serif",
                     fontStyle: "italic",
-                    fontSize: "13px",
-                    color: "rgba(255,195,110,.6)",
+                    fontSize: "clamp(15px, calc(var(--cover-w) * 0.058), 24px)",
+                    color: "rgba(255,195,110,.65)",
                     textAlign: "center",
-                    padding: "0 36px",
+                    padding: "0 12%",
                   }}
                 >
                   Journal
@@ -348,9 +355,9 @@ export function LandingCover() {
                 <div
                   style={{
                     fontFamily: "'IM Fell English', serif",
-                    fontSize: "10px",
-                    letterSpacing: "4px",
-                    color: "rgba(255,170,70,.4)",
+                    fontSize: "clamp(12px, calc(var(--cover-w) * 0.042), 18px)",
+                    letterSpacing: "0.35em",
+                    color: "rgba(255,170,70,.5)",
                     marginTop: "8px",
                   }}
                 >
@@ -389,55 +396,56 @@ export function LandingCover() {
         </div>
       </div>
 
-      {/* CTA breathing text */}
-      <div
-        className="breathe"
-        style={{
-          marginTop: "44px",
-          fontFamily: "'IM Fell English', serif",
-          fontStyle: "italic",
-          fontSize: "14px",
-          color: "rgba(255,180,90,.5)",
-        }}
-      >
-        {coverOpening ? "Opening your journal…" : "Open to begin your story"}
-      </div>
+      {/* Typewriter hint — pulses after typing completes */}
+      <TypewriterText
+        text="Open to begin your story"
+        paused={coverOpening}
+        pausedText="Opening your journal…"
+      />
 
-      {/* Auth CTAs */}
+      {/* Auth CTAs — inline-flex shine wrap avoids pill stretch in flex row */}
       <div
         style={{
           marginTop: "28px",
           display: "flex",
+          flexWrap: "wrap",
           gap: "14px",
           alignItems: "center",
+          justifyContent: "center",
+          padding: "0 16px",
         }}
       >
         <RippleButton
           type="button"
+          icon={PenLine}
           onClick={() => openAndNavigate("/register")}
           shine
+          shineRadius={4}
           style={{
             ...linkStyle,
             background: "rgba(90,40,10,.82)",
             color: "rgba(255,215,150,.92)",
             border: "none",
             padding: "11px 26px",
-            borderRadius: "3px",
+            borderRadius: "4px",
             boxShadow: "0 2px 10px rgba(0,0,0,.3)",
+            flexShrink: 0,
           }}
         >
           Start Journaling
         </RippleButton>
         <RippleButton
           type="button"
+          icon={LogIn}
           onClick={() => openAndNavigate("/login")}
           style={{
             ...linkStyle,
             background: "transparent",
-            color: "rgba(255,170,70,.5)",
-            border: "1px solid rgba(255,170,70,.22)",
+            color: "rgba(255,170,70,.65)",
+            border: "1px solid rgba(255,170,70,.28)",
             padding: "11px 26px",
-            borderRadius: "3px",
+            borderRadius: "4px",
+            flexShrink: 0,
           }}
         >
           Sign In

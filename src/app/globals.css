@@ -10,9 +10,14 @@
    on a 1440px display and degrade gracefully to 1024px.
 ───────────────────────────────────────────────────────────────── */
 :root {
+  --book-fill: 80;
   --page-w: clamp(280px, 41vw, 450px);
   --page-h: clamp(420px, 57vh, 576px);
   --spine-w: 22px;
+  /* Landing closed cover — 80% viewport, aspect 240:340 */
+  --cover-w: min(80vw, calc(80vh * 240 / 340));
+  --cover-h: calc(var(--cover-w) * 340 / 240);
+  --auth-control-h: 42px;
 
   --paper-bg: #f4ecda;
   --paper-alt: #ede1cc;
@@ -87,11 +92,10 @@ body {
   }
 }
 
+/* Radius set inline via RippleButton shineRadius — no fixed pill radius */
 .cta-shine-wrap {
   position: relative;
-  display: inline-block;
   overflow: hidden;
-  border-radius: 9999px;
 }
 
 .cta-shine-wrap::after {
@@ -346,30 +350,109 @@ body {
 }
 
 /**
- * Auth login/register — book spread fills ~85% of viewport so forms fit without scroll.
- * Spread width = spine + 2×page-w ≈ 85vw; page height ≈ 85vh minus title band.
- * Dashboard/journal keep :root defaults; only auth layout sets these overrides.
+ * Open book — 80% viewport fill (auth + journal).
+ * Spread width = spine + 2×page-w ≈ 80vw; page height ≈ 80vh minus nav band.
  */
+.book-viewport-80,
 .auth-book-viewport {
   --page-w: clamp(
     240px,
-    calc((85vw - var(--spine-w, 22px)) / 2),
+    calc((80vw - var(--spine-w, 22px)) / 2),
     720px
   );
   --page-h: clamp(
     420px,
-    calc(85vh - 52px),
+    calc(80vh - 56px),
     920px
   );
 }
 
+/* Landing cover container — enables container queries for scaled typography */
+.landing-cover-viewport {
+  --cover-w: min(80vw, calc(80vh * 240 / 340));
+  --cover-h: calc(var(--cover-w) * 340 / 240);
+  container-type: inline-size;
+}
+
+/* Auth controls — unified height for inputs, demo picker, OAuth */
+.auth-control {
+  min-height: var(--auth-control-h);
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
 /* Tighter field rhythm on auth forms — pairs with larger page tokens above */
+.book-viewport-80 .auth-form-stagger .auth-field,
 .auth-book-viewport .auth-form-stagger .auth-field {
   margin-bottom: 12px;
 }
 
+.book-viewport-80 .auth-form-stagger .auth-field-compact,
 .auth-book-viewport .auth-form-stagger .auth-field-compact {
   margin-bottom: 10px;
+}
+
+/* Sonner toast — gap between icon and title/subtitle */
+.journal-toast {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 12px !important;
+}
+
+.journal-toast [data-icon] {
+  margin: 0 !important;
+  flex-shrink: 0;
+}
+
+.journal-toast [data-content] {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Journal write footer — stack actions on very narrow pages */
+.journal-write-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  margin-top: 8px;
+  border-top: 1px solid rgba(120, 70, 20, 0.1);
+  flex-shrink: 0;
+}
+
+.journal-write-footer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+@media (max-width: 400px) {
+  .journal-write-footer__actions {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+}
+
+/* Typewriter cursor blink */
+@keyframes typewriter-cursor {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.typewriter-cursor {
+  animation: typewriter-cursor 0.9s step-end infinite;
 }
 
 /* ─── Page-turn content stagger (diary entries) ──────────────── */

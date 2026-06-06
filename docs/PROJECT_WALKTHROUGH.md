@@ -256,6 +256,12 @@ flowchart LR
 4. **Tests** — Vitest 12 unit; Playwright 3 e2e smoke (`npm run test:e2e:install` once, dev on :3000); theme-cycle skips if shelf empty; CI has no e2e.
 5. **Demo login** — on by default; `SHOW_DEMO_LOGIN=false` for prod.
 
+### UI polish (2026-06-01)
+
+1. **Landing** — `--cover-w/h` 80% viewport; scaled cover typography; `TypewriterText` CTA; Lucide icons on CTAs; fixed `RippleButton` shine wrap.
+2. **Auth** — `.book-viewport-80`; unified `auth-form-styles`; demo robohash avatar; Clear Section disabled when fields empty; Google button matches primary shape.
+3. **Journal** — `JournalWriteFooter` / `JournalReadFooter`; readable AI Assist; nav icons; welcome toast `HandMetal` + Sonner gap.
+
 ---
 
 ## 10. SQLite vs PostgreSQL on the VPS (recommendation)
@@ -309,4 +315,4 @@ That is the full loop: **terminal → Postgres in Docker → DB + user + schema 
 
 ---
 
-*Last reviewed: 2026-06-01 — C3 audit re-run; CI suite pass; e2e env-dependent.*
+*Last reviewed: 2026-06-01 — UI polish wave; lint/typecheck/test/build pass.*

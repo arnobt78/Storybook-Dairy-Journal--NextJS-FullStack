@@ -37,15 +37,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SafeImage } from "@/components/ui/safe-image";
 import { appToast } from "@/lib/app-toast";
+import { robohashUrl } from "@/lib/robohash";
 import { useOfflineSync } from "@/context/OfflineSyncContext";
 
 interface DashboardNavProps {
   user: { name?: string | null; email?: string | null; image?: string | null };
-}
-
-/** Robohash generates a unique robot image from any string (email used here). */
-function robohashUrl(seed: string) {
-  return `https://robohash.org/${encodeURIComponent(seed)}?set=set1&size=80x80`;
 }
 
 export function DashboardNav({ user }: DashboardNavProps) {

@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   CloudOff,
   HandMetal,
-  LogIn,
   Pencil,
   RefreshCw,
   Sparkles,
@@ -53,7 +52,7 @@ export const appToast = {
       show({
         title: `Welcome back, ${displayName}`,
         description: "Enjoy writing the stories of your life.",
-        icon: LogIn,
+        icon: HandMetal,
         variant: "success",
         duration: 5000,
       });

@@ -34,6 +34,7 @@ import type { ReactNode } from "react";
 import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { appToast } from "@/lib/app-toast";
 import { ConfirmDialog } from "@/components/feedback/ConfirmDialog";
@@ -780,8 +781,9 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
           <NavBtn
             onClick={goPrev}
             disabled={currentIdx === 0 || isFlipping || isWriting}
+            title="Previous page"
           >
-            ←
+            <ChevronLeft size={18} strokeWidth={2} aria-hidden />
           </NavBtn>
           <span
             style={{
@@ -799,12 +801,15 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
             disabled={
               currentIdx === entries.length - 1 || isFlipping || isWriting
             }
+            title="Next page"
           >
-            →
+            <ChevronRight size={18} strokeWidth={2} aria-hidden />
           </NavBtn>
           <Divider />
           <RippleButton
             type="button"
+            icon={Plus}
+            iconSize={14}
             onClick={newEntry}
             disabled={isFlipping || isWriting}
             style={{
@@ -820,13 +825,16 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
               cursor: "pointer",
               opacity: isFlipping || isWriting ? 0.35 : 1,
               transition: "all .2s",
+              flexShrink: 0,
             }}
           >
-            + New Entry
+            New Entry
           </RippleButton>
           <Divider />
           <RippleButton
             type="button"
+            icon={Pencil}
+            iconSize={13}
             onClick={() => setShowEditBook(true)}
             disabled={isFlipping || isWriting || isSavingBook || isDeleting}
             title="Edit journal"
@@ -842,12 +850,15 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
               borderRadius: "20px",
               cursor: "pointer",
               opacity: isFlipping || isWriting || isSavingBook || isDeleting ? 0.35 : 1,
+              flexShrink: 0,
             }}
           >
             Edit journal
           </RippleButton>
           <RippleButton
             type="button"
+            icon={Trash2}
+            iconSize={13}
             onClick={() => setConfirmDeleteBook(true)}
             disabled={isFlipping || isWriting || isDeleting}
             title="Remove journal"
@@ -863,6 +874,7 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
               borderRadius: "20px",
               cursor: "pointer",
               opacity: isFlipping || isWriting || isDeleting ? 0.35 : 1,
+              flexShrink: 0,
             }}
           >
             Remove journal

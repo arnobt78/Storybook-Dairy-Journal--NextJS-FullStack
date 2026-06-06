@@ -43,6 +43,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
             richColors
             closeButton
             toastOptions={{
+              classNames: {
+                toast: "journal-toast",
+              },
               style: {
                 background: "rgba(35,14,3,.96)",
                 border: "1px solid rgba(255,160,60,.15)",

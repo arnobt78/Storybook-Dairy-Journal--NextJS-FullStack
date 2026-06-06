@@ -19,16 +19,25 @@ import { createPortal } from "react-dom";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { BookOpen, ChevronDown } from "lucide-react";
 import { appToast } from "@/lib/app-toast";
 import { notifyJournalCacheUpdated } from "@/lib/journal-cache-notify";
+import {
+  authControlStyle,
+  fieldLabelStyle,
+  inputStyle,
+  primaryCtaStyle,
+} from "@/lib/auth-form-styles";
+import { robohashUrl } from "@/lib/robohash";
 
 import { AuthOAuthSection } from "@/components/auth/AuthOAuthSection";
 import { RippleButton } from "@/components/ui/ripple-button";
+import { SafeImage } from "@/components/ui/safe-image";
 import { TEST_ACCOUNT_EMAIL, TEST_ACCOUNT_PASSWORD } from "@/constants/auth";
 
 /** Test account seeded in the database for demos — matches api/auth/register seed logic */
 const TEST_EMAIL = TEST_ACCOUNT_EMAIL;
-const TEST_PASS  = TEST_ACCOUNT_PASSWORD;
+const TEST_PASS = TEST_ACCOUNT_PASSWORD;
 
 type LoginFormProps = {
   /** From server: true when GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET are set */
@@ -41,12 +50,14 @@ export function LoginForm({ googleEnabled = false, demoLoginEnabled = false }: L
   const router = useRouter();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
-  const [form, setForm]   = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [showTestMenu, setShowTestMenu] = useState(false);
   /** Viewport-anchored box for the demo menu — updated while open on resize/scroll. */
   const [menuBox, setMenuBox] = useState<{ top: number; left: number; width: number } | null>(null);
   const demoTriggerRef = useRef<HTMLButtonElement>(null);
+
+  const hasCredentials = Boolean(form.email.trim() || form.password.trim());
 
   const fillTestCredentials = () => {
     setForm({ email: TEST_EMAIL, password: TEST_PASS });
@@ -55,8 +66,9 @@ export function LoginForm({ googleEnabled = false, demoLoginEnabled = false }: L
     setError("");
   };
 
-  /** Clears email/password only — leaves other form state untouched. */
+  /** Clears email/password only — enabled when fields have content */
   const clearCredentialFields = () => {
+    if (!hasCredentials) return;
     setForm({ email: "", password: "" });
     setShowTestMenu(false);
     setMenuBox(null);
@@ -93,7 +105,7 @@ export function LoginForm({ googleEnabled = false, demoLoginEnabled = false }: L
     setError("");
     try {
       const res = await signIn("credentials", {
-        email:    form.email,
+        email: form.email,
         password: form.password,
         redirect: false,
       });
@@ -117,128 +129,153 @@ export function LoginForm({ googleEnabled = false, demoLoginEnabled = false }: L
   return (
     <form onSubmit={handleSubmit} className="auth-form-stagger">
       {demoLoginEnabled && (
-      <div style={{ position: "relative", zIndex: 40, marginBottom: "12px" }} className="auth-field-compact">
-        {/* Demo block: portaled menu fills test@user.com credentials or clears fields */}
-        <p
-          style={{
-            fontFamily: "'Lora',serif",
-            fontSize: "10px",
-            letterSpacing: "2px",
-            textTransform: "uppercase",
-            color: "rgba(100,55,20,.55)",
-            margin: "0 0 8px",
-          }}
-        >
-          Test Account To Login With
-        </p>
-        <RippleButton
-          ref={demoTriggerRef}
-          type="button"
-          className="w-full"
-          onClick={() => setShowTestMenu((v) => !v)}
-          style={{
-            fontFamily: "'Lora',serif", fontSize: "10px", letterSpacing: "1.5px",
-            textTransform: "uppercase", background: "rgba(120,70,20,.08)",
-            color: "rgba(100,55,20,.65)", border: "1px solid rgba(120,70,20,.2)",
-            padding: "8px 14px", borderRadius: "3px", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
-            width: "100%", boxSizing: "border-box",
-          }}
-        >
-          Select Demo Account ▾
-        </RippleButton>
-        {showTestMenu &&
-          menuBox &&
-          typeof document !== "undefined" &&
-          createPortal(
-          <div
-            role="listbox"
-            aria-label="Demo account actions"
-            style={{
-              position: "fixed",
-              top: menuBox.top,
-              left: menuBox.left,
-              width: menuBox.width,
-              zIndex: 9999,
-              background: "rgba(244,236,218,.98)", border: "1px solid rgba(120,70,20,.2)",
-              borderRadius: "4px", boxShadow: "0 8px 24px rgba(0,0,0,.18)",
-              overflow: "hidden", boxSizing: "border-box",
-            }}
+        <div style={{ position: "relative", zIndex: 40, marginBottom: "12px" }} className="auth-field-compact">
+          <p style={{ ...fieldLabelStyle, margin: "0 0 8px" }}>Test Account To Login With</p>
+          <RippleButton
+            ref={demoTriggerRef}
+            type="button"
+            className="w-full auth-control"
+            onClick={() => setShowTestMenu((v) => !v)}
+            style={authControlStyle}
           >
-            <RippleButton
-              type="button"
-              onClick={fillTestCredentials}
-              style={{
-                display: "block", width: "100%", textAlign: "left",
-                fontFamily: "'Lora',serif", fontSize: "12px",
-                color: "rgba(35,14,3,.8)", padding: "10px 14px",
-                background: "none", border: "none", cursor: "pointer",
-                borderBottom: "1px solid rgba(120,70,20,.1)", boxSizing: "border-box",
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = "rgba(120,70,20,.06)")}
-              onMouseLeave={e => (e.currentTarget.style.background = "none")}
-            >
-              Test User ({TEST_EMAIL})
-            </RippleButton>
-            <RippleButton
-              type="button"
-              onClick={clearCredentialFields}
-              style={{
-                display: "block", width: "100%", textAlign: "left",
-                fontFamily: "'Lora',serif", fontSize: "11px",
-                letterSpacing: "1px",
-                textTransform: "uppercase",
-                color: "rgba(100,55,20,.55)",
-                padding: "10px 14px",
-                background: "none", border: "none", cursor: "pointer",
-                boxSizing: "border-box",
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = "rgba(120,70,20,.06)")}
-              onMouseLeave={e => (e.currentTarget.style.background = "none")}
-            >
-              Clear Section
-            </RippleButton>
-          </div>,
-          document.body
-        )}
-      </div>
+            <span>Select Demo Account</span>
+            <ChevronDown size={14} aria-hidden className="shrink-0 opacity-60" />
+          </RippleButton>
+          {showTestMenu &&
+            menuBox &&
+            typeof document !== "undefined" &&
+            createPortal(
+              <div
+                role="listbox"
+                aria-label="Demo account actions"
+                style={{
+                  position: "fixed",
+                  top: menuBox.top,
+                  left: menuBox.left,
+                  width: menuBox.width,
+                  zIndex: 9999,
+                  background: "rgba(244,236,218,.98)",
+                  border: "1px solid rgba(120,70,20,.2)",
+                  borderRadius: "4px",
+                  boxShadow: "0 8px 24px rgba(0,0,0,.18)",
+                  overflow: "hidden",
+                  boxSizing: "border-box",
+                }}
+              >
+                <RippleButton
+                  type="button"
+                  onClick={fillTestCredentials}
+                  style={{
+                    display: "flex",
+                    width: "100%",
+                    alignItems: "center",
+                    gap: "10px",
+                    textAlign: "left",
+                    fontFamily: "'Lora',serif",
+                    fontSize: "12px",
+                    color: "rgba(35,14,3,.8)",
+                    padding: "10px 14px",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    borderBottom: "1px solid rgba(120,70,20,.1)",
+                    boxSizing: "border-box",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(120,70,20,.06)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "none";
+                  }}
+                >
+                  <SafeImage
+                    src={robohashUrl(TEST_EMAIL, 56)}
+                    alt=""
+                    width={28}
+                    height={28}
+                    className="shrink-0 rounded-full"
+                    unoptimized
+                  />
+                  <span>
+                    <strong>Test User</strong>
+                    <span style={{ display: "block", fontSize: "10px", opacity: 0.65 }}>{TEST_EMAIL}</span>
+                  </span>
+                </RippleButton>
+                <RippleButton
+                  type="button"
+                  disabled={!hasCredentials}
+                  onClick={clearCredentialFields}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    textAlign: "left",
+                    fontFamily: "'Lora',serif",
+                    fontSize: "11px",
+                    letterSpacing: "1px",
+                    textTransform: "uppercase",
+                    color: "rgba(100,55,20,.55)",
+                    padding: "10px 14px",
+                    background: "none",
+                    border: "none",
+                    cursor: hasCredentials ? "pointer" : "not-allowed",
+                    opacity: hasCredentials ? 1 : 0.35,
+                    boxSizing: "border-box",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (hasCredentials) e.currentTarget.style.background = "rgba(120,70,20,.06)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "none";
+                  }}
+                >
+                  Clear Section
+                </RippleButton>
+              </div>,
+              document.body,
+            )}
+        </div>
       )}
 
-      {/* ── AUTH FORM: credential fields + inline validation ── */}
       <Field label="Email">
         <input
-          type="email" required
+          type="email"
+          required
+          className="auth-control"
           value={form.email}
-          onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+          onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
           placeholder="you@example.com"
           style={inputStyle}
         />
       </Field>
       <Field label="Password">
         <input
-          type="password" required
+          type="password"
+          required
+          className="auth-control"
           value={form.password}
-          onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+          onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
           placeholder="••••••••"
           style={inputStyle}
         />
       </Field>
 
       {error && (
-        <p style={{ fontFamily: "'Lora',serif", fontSize: "12px", color: "#c0392b", marginBottom: "12px", margin: "0 0 12px" }}>
+        <p style={{ fontFamily: "'Lora',serif", fontSize: "12px", color: "#c0392b", margin: "0 0 12px" }}>
           {error}
         </p>
       )}
 
       <RippleButton
-        type="submit" disabled={loading} shine
+        type="submit"
+        disabled={loading}
+        icon={BookOpen}
+        shine
+        shineRadius={4}
+        className="w-full"
         style={{
-          width: "100%", fontFamily: "'Lora',serif", fontSize: "11px",
-          letterSpacing: "2px", textTransform: "uppercase",
-          background: "rgba(90,40,10,.88)", color: "rgba(255,215,150,.92)",
-          border: "none", padding: "12px", borderRadius: "4px",
+          ...primaryCtaStyle,
           cursor: loading ? "not-allowed" : "pointer",
-          opacity: loading ? 0.7 : 1, boxShadow: "0 2px 10px rgba(0,0,0,.2)",
+          opacity: loading ? 0.7 : 1,
         }}
       >
         {loading ? "Opening…" : "Open My Journal"}
@@ -252,21 +289,8 @@ export function LoginForm({ googleEnabled = false, demoLoginEnabled = false }: L
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="auth-field" style={{ marginBottom: "12px" }}>
-      <label style={{
-        display: "block", fontFamily: "'Lora',serif", fontSize: "10px",
-        letterSpacing: "2px", textTransform: "uppercase",
-        color: "rgba(100,55,20,.55)", marginBottom: "6px",
-      }}>
-        {label}
-      </label>
+      <label style={fieldLabelStyle}>{label}</label>
       {children}
     </div>
   );
 }
-
-const inputStyle: React.CSSProperties = {
-  width: "100%", fontFamily: "'Lora',serif", fontSize: "13px",
-  background: "rgba(120,70,20,.06)", border: "1px solid rgba(120,70,20,.22)",
-  borderRadius: "4px", padding: "10px 12px", outline: "none",
-  color: "rgba(35,14,3,.8)",
-};

@@ -24,6 +24,8 @@ import { MOODS, WEATHERS } from "@/constants";
 import { wordCount } from "@/lib/utils";
 import type { FlipDirection } from "@/types";
 import { RippleButton } from "@/components/ui/ripple-button";
+import { JournalReadFooter } from "@/components/journal/JournalReadFooter";
+import { JournalWriteFooter } from "@/components/journal/JournalWriteFooter";
 
 const JournalEditor = dynamic(
   () => import("@/components/editor/JournalEditor").then((m) => ({ default: m.JournalEditor })),
@@ -221,34 +223,15 @@ export function RightPage({
                 />
               </div>
 
-              {/* Write footer */}
-              <div style={{
-                display: "flex", alignItems: "center", gap: "6px",
-                paddingTop: "8px", marginTop: "8px",
-                borderTop: "1px solid rgba(120,70,20,.1)", flexShrink: 0,
-              }}>
-                <span style={{ fontFamily: "'Lora',serif", fontSize: "10px", color: "rgba(100,55,20,.38)", marginRight: "auto" }}>{wc} words</span>
-                <RippleButton type="button" onClick={onAiAssist} disabled={isAiThinking || !draft.content.trim()} style={{
-                  fontFamily: "'Lora',serif", fontSize: "9px", letterSpacing: "1.5px",
-                  textTransform: "uppercase", background: "rgba(80,35,120,.18)",
-                  color: "rgba(200,160,255,.65)", border: "1px solid rgba(140,80,220,.2)",
-                  padding: "4px 12px", borderRadius: "20px", cursor: "pointer",
-                  opacity: isAiThinking || !draft.content.trim() ? 0.3 : 1,
-                }}>✦ AI Assist</RippleButton>
-                <RippleButton type="button" onClick={onCancel} style={{
-                  fontFamily: "'Lora',serif", fontSize: "9.5px", letterSpacing: "1.5px",
-                  textTransform: "uppercase", background: "transparent",
-                  color: "rgba(100,55,20,.5)", border: "1px solid rgba(120,70,20,.22)",
-                  padding: "5px 12px", borderRadius: "3px", cursor: "pointer",
-                }}>Cancel</RippleButton>
-                <RippleButton type="button" onClick={onSave} disabled={isSaving} shine style={{
-                  fontFamily: "'Lora',serif", fontSize: "9.5px", letterSpacing: "1.5px",
-                  textTransform: "uppercase", background: "rgba(90,40,10,.82)",
-                  color: "rgba(255,215,150,.92)", border: "none",
-                  padding: "5px 14px", borderRadius: "3px", cursor: "pointer",
-                  boxShadow: "0 2px 8px rgba(0,0,0,.3)",
-                }}>{isSaving ? "Saving…" : "Save"}</RippleButton>
-              </div>
+              <JournalWriteFooter
+                wordCount={wc}
+                isAiThinking={isAiThinking}
+                isSaving={isSaving}
+                canAiAssist={Boolean(draft.content.trim())}
+                onAiAssist={onAiAssist}
+                onCancel={onCancel}
+                onSave={onSave}
+              />
             </>
           ) : (
             /* ── READ MODE with stagger animation ── */
@@ -298,34 +281,12 @@ export function RightPage({
                 </div>
               )}
 
-              {/* Footer */}
-              <div style={{
-                display: "flex", alignItems: "center", gap: "8px",
-                paddingTop: "10px", marginTop: "8px",
-                borderTop: "1px solid rgba(120,70,20,.1)", flexShrink: 0,
-              }}>
-                <span style={{ fontSize: "15px" }}>{entry.mood}</span>
-                <span style={{ fontSize: "15px" }}>{entry.weather}</span>
-                <span style={{ fontFamily: "'Lora',serif", fontSize: "10px", color: "rgba(100,55,20,.38)", marginRight: "auto" }}>
-                  {entry.wordCount} words
-                </span>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "auto" }}>
-                {onDeleteEntry && canDeleteEntry && (
-                  <RippleButton type="button" onClick={onDeleteEntry} style={{
-                    fontFamily: "'Lora',serif", fontSize: "9px", letterSpacing: "1.5px",
-                    textTransform: "uppercase", background: "transparent",
-                    color: "rgba(140,50,30,.55)", border: "1px solid rgba(140,50,30,.22)",
-                    padding: "4px 10px", borderRadius: "3px", cursor: "pointer",
-                  }}>Remove page</RippleButton>
-                )}
-                <RippleButton type="button" onClick={onStartWriting} style={{
-                  fontFamily: "'Lora',serif", fontSize: "9.5px", letterSpacing: "1.5px",
-                  textTransform: "uppercase", background: "transparent",
-                  color: "rgba(100,55,20,.5)", border: "1px solid rgba(120,70,20,.2)",
-                  padding: "4px 11px", borderRadius: "3px", cursor: "pointer",
-                }}>✒ Edit</RippleButton>
-                </div>
-              </div>
+              <JournalReadFooter
+                entry={entry}
+                onStartWriting={onStartWriting}
+                onDeleteEntry={onDeleteEntry}
+                canDeleteEntry={canDeleteEntry}
+              />
             </div>
           )}
         </div>
