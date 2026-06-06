@@ -14,10 +14,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { signIn } from "next-auth/react";
-import { toast } from "sonner";
+import { appToast } from "@/lib/app-toast";
 import { queryKeys } from "@/lib/query-keys";
 
 import { AuthOAuthSection } from "@/components/auth/AuthOAuthSection";
+import { RippleButton } from "@/components/ui/ripple-button";
 
 type RegisterFormProps = {
   /** From server: true when Google OAuth env vars are set */
@@ -53,7 +54,8 @@ export function RegisterForm({ googleEnabled = false }: RegisterFormProps) {
         password: form.password,
         redirect: false,
       });
-      toast.success("Your journal is ready!");
+      const name = form.displayName.trim() || form.email.split("@")[0] || "Writer";
+      appToast.auth.registered(name);
       /* New user: refresh every journal-scoped query so dashboard + reader never reuse old cache. */
       await queryClient.invalidateQueries({ queryKey: queryKeys.journalSubtree() });
       router.push("/dashboard");
@@ -102,9 +104,10 @@ export function RegisterForm({ googleEnabled = false }: RegisterFormProps) {
       {error && (
         <p style={{ fontFamily: "'Lora',serif", fontSize: "12px", color: "#c0392b", marginBottom: "12px" }}>{error}</p>
       )}
-      <button
+      <RippleButton
         type="submit"
         disabled={loading}
+        shine
         style={{
           width: "100%",
           fontFamily: "'Lora',serif",
@@ -122,7 +125,7 @@ export function RegisterForm({ googleEnabled = false }: RegisterFormProps) {
         }}
       >
         {loading ? "Creating your journal…" : "Begin My Story"}
-      </button>
+      </RippleButton>
 
       <AuthOAuthSection
         googleEnabled={!!googleEnabled}

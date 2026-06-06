@@ -33,6 +33,7 @@
 import type { CSSProperties } from "react";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { RippleButton } from "@/components/ui/ripple-button";
 
 /** Total ms the cover animation plays before router.push fires. */
 const COVER_OPEN_MS = 900;
@@ -411,9 +412,10 @@ export function LandingCover() {
           alignItems: "center",
         }}
       >
-        <button
+        <RippleButton
           type="button"
           onClick={() => openAndNavigate("/register")}
+          shine
           style={{
             ...linkStyle,
             background: "rgba(90,40,10,.82)",
@@ -425,8 +427,8 @@ export function LandingCover() {
           }}
         >
           Start Journaling
-        </button>
-        <button
+        </RippleButton>
+        <RippleButton
           type="button"
           onClick={() => openAndNavigate("/login")}
           style={{
@@ -439,7 +441,7 @@ export function LandingCover() {
           }}
         >
           Sign In
-        </button>
+        </RippleButton>
       </div>
     </div>
   );

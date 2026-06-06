@@ -35,13 +35,15 @@ import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { appToast } from "@/lib/app-toast";
 import { ConfirmDialog } from "@/components/feedback/ConfirmDialog";
 import { BookEditorModal } from "@/components/journal/BookEditorModal";
 import { LeftPage } from "./LeftPage";
 import { RightPage } from "./RightPage";
 import { PageFlipOverlay } from "./PageFlip";
 import { usePageFlip } from "@/hooks/usePageFlip";
+import { useBookTheme } from "@/hooks/useBookTheme";
+import { RippleButton } from "@/components/ui/ripple-button";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { useOfflineEntryDraft } from "@/hooks/useOfflineEntryDraft";
 import { useOfflineIdRemap } from "@/hooks/useOfflineIdRemap";
@@ -80,6 +82,7 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
   const entries = book.entries;
   const bookTitle = book.title;
   const bookColor = book.coverColor;
+  const bookThemeProps = useBookTheme(book.theme ?? "warm-paper");
 
   const [focusedEntryId, setFocusedEntryId] = useState<string | null>(() => {
     const last =
@@ -220,9 +223,9 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
           refreshPendingCount: refreshCount,
         });
         setIsWriting(false);
-        toast.info("Saved offline — will sync when online");
+        appToast.offline.queued("Entry");
       } catch {
-        toast.error("Failed to save offline");
+        appToast.journal.saveFailed("save offline");
       } finally {
         setIsSaving(false);
       }
@@ -241,7 +244,7 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.journalSubtree(),
       });
-      toast.success("Entry saved");
+      appToast.journal.entrySaved();
     } catch (err) {
       if (isOfflineOrNetworkError(err)) {
         try {
@@ -253,12 +256,12 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
             refreshPendingCount: refreshCount,
           });
           setIsWriting(false);
-          toast.info("Saved offline — will sync when online");
+          appToast.offline.queued("Entry");
         } catch {
-          toast.error("Failed to save offline");
+          appToast.journal.saveFailed("save offline");
         }
       } else {
-        toast.error("Failed to save entry");
+        appToast.journal.saveFailed("save entry");
       }
     } finally {
       setIsSaving(false);
@@ -298,9 +301,9 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
           });
           setIsWriting(true);
         });
-        toast.info("New page saved offline — will sync when online");
+        appToast.offline.queued("New page");
       } catch {
-        toast.error("Failed to queue new page offline");
+        appToast.journal.saveFailed("queue new page offline");
       }
       return;
     }
@@ -362,12 +365,12 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
             });
             setIsWriting(true);
           });
-          toast.info("New page saved offline — will sync when online");
+          appToast.offline.queued("New page");
         } catch {
-          toast.error("Failed to queue new page offline");
+          appToast.journal.saveFailed("queue new page offline");
         }
       } else {
-        toast.error("Failed to create entry");
+        appToast.journal.saveFailed("create entry");
       }
     }
   };
@@ -396,7 +399,7 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
 
       if (streamRes.status === 429) {
         const errJson = (await streamRes.json()) as { error?: string };
-        toast.error(errJson.error ?? "AI rate limit exceeded");
+        appToast.ai.rateLimited(60);
         return;
       }
 
@@ -420,7 +423,9 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
               text?: string;
               error?: string;
               done?: string;
+              usedFallback?: boolean;
             };
+            if (json.usedFallback) appToast.ai.fallbackOpenRouter();
             if (json.error) throw new Error(json.error);
             if (json.text) {
               setDraft((d) => {
@@ -455,7 +460,7 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
         }));
       }
     } catch {
-      toast.error("AI assist unavailable");
+      appToast.ai.unavailable();
     } finally {
       setIsAiThinking(false);
     }
@@ -479,9 +484,9 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
         const nextIdx = Math.min(currentIdx, fresh.entries.length - 1);
         setFocusedEntryId(fresh.entries[nextIdx]?.id ?? null);
       }
-      toast.success("Page removed");
+      appToast.journal.entryRemoved();
     } catch {
-      toast.error("Failed to remove page");
+      appToast.journal.saveFailed("remove page");
     } finally {
       setIsDeleting(false);
       setConfirmDeleteEntry(false);
@@ -495,11 +500,11 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
     try {
       await deleteJournalBook(bookId);
       await queryClient.invalidateQueries({ queryKey: queryKeys.journalSubtree() });
-      toast.success("Journal removed");
+      appToast.journal.bookRemoved();
       router.push("/dashboard");
       router.refresh();
     } catch {
-      toast.error("Failed to remove journal");
+      appToast.journal.saveFailed("remove journal");
     } finally {
       setIsDeleting(false);
       setConfirmDeleteBook(false);
@@ -519,14 +524,14 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
           refreshPendingCount: refreshCount,
         });
         setShowEditBook(false);
-        toast.info("Journal saved offline — will sync when online");
+        appToast.offline.queued("Journal");
         return;
       }
 
       await updateJournalBook(bookId, values);
       await queryClient.invalidateQueries({ queryKey: queryKeys.journalSubtree() });
       setShowEditBook(false);
-      toast.success("Journal updated");
+      appToast.journal.bookUpdated();
     } catch (err) {
       if (isOfflineOrNetworkError(err)) {
         try {
@@ -537,12 +542,12 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
             refreshPendingCount: refreshCount,
           });
           setShowEditBook(false);
-          toast.info("Journal saved offline — will sync when online");
+          appToast.offline.queued("Journal");
         } catch {
-          toast.error("Failed to save journal offline");
+          appToast.journal.saveFailed("save journal offline");
         }
       } else {
-        toast.error("Failed to update journal");
+        appToast.journal.saveFailed("update journal");
       }
     } finally {
       setIsSavingBook(false);
@@ -577,10 +582,11 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
             This journal has no pages yet. Create the first entry to open the
             book.
           </p>
-          <button
+          <RippleButton
             type="button"
             onClick={() => void newEntry()}
             disabled={isFlipping || isWriting}
+            shine
             style={{
               fontFamily: "'Lora',serif",
               fontSize: "11px",
@@ -596,8 +602,8 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
             }}
           >
             + First page
-          </button>
-          <button
+          </RippleButton>
+          <RippleButton
             type="button"
             onClick={() => setShowEditBook(true)}
             disabled={isFlipping || isWriting || isSavingBook}
@@ -618,8 +624,8 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
             }}
           >
             Edit journal
-          </button>
-          <button
+          </RippleButton>
+          <RippleButton
             type="button"
             onClick={() => setConfirmDeleteBook(true)}
             disabled={isFlipping || isWriting || isDeleting}
@@ -640,7 +646,7 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
             }}
           >
             Remove journal
-          </button>
+          </RippleButton>
         </div>
         <BookEditorModal
           key={`edit-${bookId}-${showEditBook}`}
@@ -670,7 +676,10 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
   return (
     <>
       {/* Book shadow on the 3-D row — avoids parent `filter` + preserve-3d shimmer (same rationale as `AuthBookShell`). */}
-      <div style={{ position: "relative" }}>
+      <div
+        style={{ position: "relative", ...bookThemeProps.style }}
+        data-book-theme={bookThemeProps["data-book-theme"]}
+      >
         {/* Book spread — `pointer-events: none` on the 3-D flex row avoids an oversized
           axis-aligned hit box (full spread) stealing clicks; `LeftPage` / `RightPage`
           re-enable `auto` only on their inner content stacks. */}
@@ -792,7 +801,7 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
             →
           </NavBtn>
           <Divider />
-          <button
+          <RippleButton
             type="button"
             onClick={newEntry}
             disabled={isFlipping || isWriting}
@@ -812,9 +821,9 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
             }}
           >
             + New Entry
-          </button>
+          </RippleButton>
           <Divider />
-          <button
+          <RippleButton
             type="button"
             onClick={() => setShowEditBook(true)}
             disabled={isFlipping || isWriting || isSavingBook || isDeleting}
@@ -834,8 +843,8 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
             }}
           >
             Edit journal
-          </button>
-          <button
+          </RippleButton>
+          <RippleButton
             type="button"
             onClick={() => setConfirmDeleteBook(true)}
             disabled={isFlipping || isWriting || isDeleting}
@@ -855,7 +864,7 @@ export function BookSpread({ initialBook }: BookSpreadProps) {
             }}
           >
             Remove journal
-          </button>
+          </RippleButton>
         </div>
 
         <BookEditorModal
@@ -929,7 +938,7 @@ function NavBtn({
   title?: string;
 }) {
   return (
-    <button
+    <RippleButton
       type="button"
       onClick={onClick}
       disabled={disabled}
@@ -950,7 +959,7 @@ function NavBtn({
       }}
     >
       {children}
-    </button>
+    </RippleButton>
   );
 }
 

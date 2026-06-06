@@ -3,8 +3,8 @@
 | Field | Value |
 |-------|-------|
 | **Cycle** | C1 |
-| **Revision** | C1-bootstrap-2026-06-01-r2 |
-| **Status** | Stage 4 static complete; e2e pending |
+| **Revision** | C2-platform-upgrade-2026-06-01 |
+| **Status** | Stage 4 static complete (C2 REQs added); e2e pending |
 | **Stage** | 4 Verification |
 | **eval_gate_status** | CONDITIONAL |
 | **Last Updated** | 2026-06-01T18:00:00Z |
@@ -13,7 +13,7 @@
 ## Evidence Summary
 
 ```
-Scope: static verify REQ-0001–0012, 0015, 0019–0020, 0022–0028 | Traceability: 28 REQs, ART-0048
+Scope: static verify REQ-0001–0018, 0019–0020, 0022–0028 | Traceability: 28 REQs, ART-0062
 Findings: PASS 14 static | FLAG 2 | FAIL 0 | NOT RUN 14 (e2e/integration live)
 Decision Points: Gate 2 held on REQ-0021; REQ-0009 prod demo gate
 Log: 2026-06-01 | agile-v-bootstrap | C1 r2 re-baseline | CR-0002 offline+guardrails PASS static

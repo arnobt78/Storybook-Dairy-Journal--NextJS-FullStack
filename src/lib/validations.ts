@@ -23,6 +23,9 @@ export const createBookSchema = z.object({
   description: z.string().max(300).optional(),
   coverColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#8b4513"),
   coverEmoji: z.string().default("📖"),
+  theme: z
+    .enum(["warm-paper", "dark-academia", "midnight-journal", "soft-minimal", "vintage-diary"])
+    .default("warm-paper"),
   visibility: z.enum(["private", "public"]).default("private"),
 });
 

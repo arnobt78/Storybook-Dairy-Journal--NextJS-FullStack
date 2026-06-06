@@ -1,19 +1,13 @@
 /**
- * WALKTHROUGH — ai-rate-limit.ts
- *
- * In-memory sliding window: 10 requests / 60s per userId (Vercel MVP).
- * assistSessionId dedupes stream + sync fallback so one click = one slot.
- *
- * consumeAiRateLimit flow:
- *   1) Prune expired session keys
- *   2) If assistSessionId seen recently → ok (no double charge)
- *   3) Else increment bucket or reject with retryAfterSec
- *
- * Upgrade path: Redis/Upstash for multi-instance serverless.
+ * AI rate limit — Upstash Redis sliding window with in-memory dev fallback.
+ * assistSessionId dedupes stream + sync so one click = one slot.
  */
+import { getRedis } from "@/lib/redis";
+
 const WINDOW_MS = 60_000;
 const MAX_REQUESTS = 10;
 const SESSION_TTL_MS = 120_000;
+const WINDOW_SEC = Math.ceil(WINDOW_MS / 1000);
 
 const buckets = new Map<string, { count: number; resetAt: number }>();
 const assistSessions = new Map<string, number>();
@@ -24,7 +18,7 @@ function pruneAssistSessions(now: number): void {
   }
 }
 
-export function consumeAiRateLimit(
+function memoryConsume(
   userId: string,
   assistSessionId?: string | null,
 ): { ok: true } | { ok: false; retryAfterSec: number } {
@@ -34,7 +28,6 @@ export function consumeAiRateLimit(
   if (assistSessionId) {
     const sessionKey = `${userId}:${assistSessionId}`;
     const sessionExpires = assistSessions.get(sessionKey);
-    /* Same click retried stream→sync: do not consume another bucket slot */
     if (sessionExpires && now < sessionExpires) {
       return { ok: true };
     }
@@ -42,7 +35,6 @@ export function consumeAiRateLimit(
 
   const bucket = buckets.get(userId);
 
-  /* New window or expired bucket — reset counter */
   if (!bucket || now >= bucket.resetAt) {
     buckets.set(userId, { count: 1, resetAt: now + WINDOW_MS });
     if (assistSessionId) {
@@ -60,4 +52,49 @@ export function consumeAiRateLimit(
     assistSessions.set(`${userId}:${assistSessionId}`, now + SESSION_TTL_MS);
   }
   return { ok: true };
+}
+
+async function redisConsume(
+  userId: string,
+  assistSessionId?: string | null,
+): Promise<{ ok: true } | { ok: false; retryAfterSec: number }> {
+  const redis = getRedis();
+  if (!redis) return memoryConsume(userId, assistSessionId);
+
+  const now = Date.now();
+  const bucketKey = `ai:rl:${userId}`;
+
+  if (assistSessionId) {
+    const sessionKey = `ai:session:${userId}:${assistSessionId}`;
+    const exists = await redis.get<number>(sessionKey);
+    if (exists) return { ok: true };
+  }
+
+  const count = await redis.incr(bucketKey);
+  if (count === 1) {
+    await redis.expire(bucketKey, WINDOW_SEC);
+  }
+
+  if (count > MAX_REQUESTS) {
+    const ttl = await redis.ttl(bucketKey);
+    return { ok: false, retryAfterSec: ttl > 0 ? ttl : WINDOW_SEC };
+  }
+
+  if (assistSessionId) {
+    const sessionKey = `ai:session:${userId}:${assistSessionId}`;
+    await redis.set(sessionKey, 1, { ex: Math.ceil(SESSION_TTL_MS / 1000) });
+  }
+
+  return { ok: true };
+}
+
+export async function consumeAiRateLimit(
+  userId: string,
+  assistSessionId?: string | null,
+): Promise<{ ok: true } | { ok: false; retryAfterSec: number }> {
+  try {
+    return await redisConsume(userId, assistSessionId);
+  } catch {
+    return memoryConsume(userId, assistSessionId);
+  }
 }

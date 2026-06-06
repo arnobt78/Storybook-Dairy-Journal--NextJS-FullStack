@@ -14,7 +14,7 @@
  * Key format: `${bookId}:${entryId}` via `draftKey()`.
  */
 import { useEffect, useRef } from "react";
-import { toast } from "sonner";
+import { appToast } from "@/lib/app-toast";
 import {
   clearEntryDraft,
   draftKey,
@@ -82,7 +82,7 @@ export function useOfflineEntryDraft({
           : 0;
         if (stored.updatedAt > serverTime) {
           onRestore(stored.draft);
-          toast.info("Restored unsaved draft", { duration: 2500 });
+          appToast.journal.draftRestored();
         }
         restoredRef.current = key;
       } catch {

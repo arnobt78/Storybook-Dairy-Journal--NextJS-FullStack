@@ -11,6 +11,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createEntrySchema } from "@/lib/validations";
 import { slugify, wordCount, readingTime, formatEntryDate, stringifyTags } from "@/lib/utils";
+import { afterJournalMutation } from "@/lib/journal-mutation";
 
 export async function POST(req: NextRequest) {
   /* Session check */
@@ -60,6 +61,11 @@ export async function POST(req: NextRequest) {
       entryDate,
       weekday,
     },
+  });
+
+  await afterJournalMutation(session.user.id, "entry_created", {
+    bookId,
+    entryId: entry.id,
   });
 
   return NextResponse.json({

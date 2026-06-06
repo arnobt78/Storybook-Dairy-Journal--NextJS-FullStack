@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DashboardNav } from "@/components/layout/DashboardNav";
+import { DashboardCommandProvider } from "@/components/layout/DashboardCommandProvider";
 import { OAuthReturnSync } from "@/components/auth/OAuthReturnSync";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -33,7 +34,9 @@ export default async function DashboardLayout({
       {/* After Google OAuth return, invalidate journal queries so shelf is fresh */}
       <OAuthReturnSync />
       <DashboardNav user={session.user} />
-      <main>{children}</main>
+      <DashboardCommandProvider>
+        <main>{children}</main>
+      </DashboardCommandProvider>
     </div>
   );
 }

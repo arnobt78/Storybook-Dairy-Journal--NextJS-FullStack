@@ -12,6 +12,7 @@ import { prisma } from "@/lib/db";
 import { resolveUniqueEntrySlug } from "@/lib/journal-slug";
 import { updateEntrySchema } from "@/lib/validations";
 import { wordCount, readingTime, stringifyTags, parseTags } from "@/lib/utils";
+import { afterJournalMutation } from "@/lib/journal-mutation";
 
 export async function PATCH(
   req: NextRequest,
@@ -78,6 +79,12 @@ export async function PATCH(
   }
 
   const updated = await prisma.journalEntry.findUnique({ where: { id: entryId } });
+  if (updated) {
+    await afterJournalMutation(session.user.id, "entry_updated", {
+      bookId: updated.bookId,
+      entryId: updated.id,
+    });
+  }
   return NextResponse.json({
     success: true,
     data: updated ? { ...updated, tags: parseTags(updated.tags) } : null,
@@ -96,6 +103,14 @@ export async function DELETE(
 
   const { entryId } = await params;
 
+  const existing = await prisma.journalEntry.findFirst({
+    where: { id: entryId, userId: session.user.id },
+    select: { bookId: true },
+  });
+  if (!existing) {
+    return NextResponse.json({ success: false, message: "Entry not found" }, { status: 404 });
+  }
+
   /* Prisma deleteMany — ownership enforced via userId filter. */
   const result = await prisma.journalEntry.deleteMany({
     where: { id: entryId, userId: session.user.id },
@@ -104,6 +119,11 @@ export async function DELETE(
   if (result.count === 0) {
     return NextResponse.json({ success: false, message: "Entry not found" }, { status: 404 });
   }
+
+  await afterJournalMutation(session.user.id, "entry_deleted", {
+    bookId: existing.bookId,
+    entryId,
+  });
 
   return NextResponse.json({ success: true, message: "Deleted" });
 }

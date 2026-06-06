@@ -12,6 +12,8 @@
 import type { CSSProperties } from "react";
 import { useState } from "react";
 import { COVER_COLORS, COVER_EMOJIS } from "@/constants";
+import { BOOK_THEMES } from "@/constants/themes";
+import { RippleButton } from "@/components/ui/ripple-button";
 import {
   DEFAULT_BOOK_FORM,
   type BookFormValues,
@@ -139,7 +141,7 @@ function BookEditorForm({
           }}
         >
           {COVER_COLORS.map((c) => (
-            <button
+            <RippleButton
               key={c.value}
               type="button"
               aria-label={c.label}
@@ -160,6 +162,41 @@ function BookEditorForm({
             />
           ))}
         </div>
+        <label style={labelStyle}>Page Theme</label>
+        <div
+          style={{
+            display: "flex",
+            gap: "6px",
+            flexWrap: "wrap",
+            marginBottom: "16px",
+          }}
+        >
+          {BOOK_THEMES.map((theme) => (
+            <RippleButton
+              key={theme.id}
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, theme: theme.id }))}
+              style={{
+                fontFamily: "'Lora',serif",
+                fontSize: "10px",
+                letterSpacing: "1px",
+                textTransform: "uppercase",
+                background:
+                  form.theme === theme.id ? "rgba(120,70,20,.14)" : "rgba(120,70,20,.06)",
+                border:
+                  form.theme === theme.id
+                    ? "1px solid rgba(120,70,20,.35)"
+                    : "1px solid rgba(120,70,20,.15)",
+                borderRadius: "20px",
+                padding: "5px 10px",
+                cursor: "pointer",
+                color: "rgba(45,20,5,.75)",
+              }}
+            >
+              {theme.label}
+            </RippleButton>
+          ))}
+        </div>
         <label style={labelStyle}>Cover Emoji</label>
         <div
           style={{
@@ -170,7 +207,7 @@ function BookEditorForm({
           }}
         >
           {COVER_EMOJIS.map((emoji) => (
-            <button
+            <RippleButton
               key={emoji}
               type="button"
               onClick={() => setForm((f) => ({ ...f, coverEmoji: emoji }))}
@@ -188,21 +225,22 @@ function BookEditorForm({
               }}
             >
               {emoji}
-            </button>
+            </RippleButton>
           ))}
         </div>
         <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-          <button type="button" disabled={loading} onClick={onClose} style={cancelBtn}>
+          <RippleButton type="button" disabled={loading} onClick={onClose} style={cancelBtn}>
             Cancel
-          </button>
-          <button
+          </RippleButton>
+          <RippleButton
             type="button"
             onClick={handleSubmit}
             disabled={!form.title.trim() || loading}
+            shine
             style={submitBtn}
           >
             {submitLabel}
-          </button>
+          </RippleButton>
         </div>
       </div>
     </div>

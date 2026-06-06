@@ -70,6 +70,62 @@ body {
   border-radius: 2px;
 }
 
+/* ─── Ripple + CTA shine (docs/RIPPLE_BUTTON_EFFECT.md) ──────── */
+.ripple-effect {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  background: rgba(255, 200, 140, 0.35);
+  pointer-events: none;
+  animation: ripple-expand 0.55s ease-out forwards;
+}
+
+@keyframes ripple-expand {
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+.cta-shine-wrap {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  border-radius: 9999px;
+}
+
+.cta-shine-wrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 85%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
+  );
+  transform: skewX(-8deg);
+  animation: cta-shine 4.5s cubic-bezier(0.35, 0, 0.15, 1) infinite;
+  pointer-events: none;
+}
+
+.cta-shine-button {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes cta-shine {
+  0% {
+    transform: translateX(-100%) skewX(-8deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-8deg);
+  }
+}
+
 /* ─── TipTap / ProseMirror ───────────────────────────────────── */
 .ProseMirror {
   outline: none;
@@ -145,6 +201,31 @@ body {
   color: var(--leather-mid);
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+/* Read-mode HTML from TipTap — same typography as editor */
+.journal-prose {
+  font-family: "Lora", serif;
+  font-size: 13px;
+  line-height: 1.92;
+  color: var(--theme-ink, rgba(35, 14, 3, 0.78));
+}
+.journal-prose p {
+  margin: 0 0 0.4em;
+}
+.journal-prose h1,
+.journal-prose h2 {
+  font-family: "Playfair Display", serif;
+  margin: 0.5em 0 0.25em;
+}
+.journal-prose blockquote {
+  border-left: 2px solid rgba(120, 70, 20, 0.3);
+  padding-left: 1em;
+  font-style: italic;
+}
+.journal-prose ul,
+.journal-prose ol {
+  padding-left: 1.4em;
 }
 
 /* ─── Dashboard scroll ───────────────────────────────────────── */

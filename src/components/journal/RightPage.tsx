@@ -17,11 +17,35 @@
  *  Stagger is suppressed while `isFlipping` or `isWriting` to avoid fighting the overlay.
  *  Write mode is controlled here; autosave/offline persistence live in BookSpread.
  */
-import { useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { useState } from "react";
 import type { JournalEntry, EntryDraft } from "@/types";
 import { MOODS, WEATHERS } from "@/constants";
 import { wordCount } from "@/lib/utils";
 import type { FlipDirection } from "@/types";
+import { RippleButton } from "@/components/ui/ripple-button";
+
+const JournalEditor = dynamic(
+  () => import("@/components/editor/JournalEditor").then((m) => ({ default: m.JournalEditor })),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        style={{
+          flex: 1,
+          minHeight: 80,
+          fontFamily: "'Lora',serif",
+          fontStyle: "italic",
+          fontSize: "12px",
+          color: "rgba(120,70,30,.32)",
+          paddingTop: 12,
+        }}
+      >
+        Loading editor…
+      </div>
+    ),
+  },
+);
 
 interface RightPageProps {
   entry: JournalEntry;
@@ -48,7 +72,6 @@ export function RightPage({
   onStartWriting, onDraftChange, onSave, onCancel, onAiAssist, isAiThinking,
   onDeleteEntry, canDeleteEntry = true,
 }: RightPageProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [newTag, setNewTag] = useState("");
 
   const handleTagKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -73,7 +96,7 @@ export function RightPage({
     <div style={{
       width: "var(--page-w, 360px)", height: "var(--page-h, 540px)",
       position: "relative",
-      background: "linear-gradient(to left, #e8dcc9 0%, #f4ecda 60%, #ede0c8 100%)",
+      background: "var(--theme-page-right, linear-gradient(to left, #e8dcc9 0%, #f4ecda 60%, #ede0c8 100%))",
       borderRadius: "0 4px 4px 0",
       boxShadow: "inset 10px 0 24px rgba(120,70,20,.1)",
       flexShrink: 0, overflow: "hidden",
@@ -139,40 +162,34 @@ export function RightPage({
               <MiniLabel>Mood</MiniLabel>
               <div style={{ display: "flex", gap: "2px", flexWrap: "wrap", marginBottom: "6px" }}>
                 {MOODS.map(m => (
-                  <button key={m} type="button" onClick={() => onDraftChange("mood", m)} style={{
+                  <RippleButton key={m} type="button" onClick={() => onDraftChange("mood", m)} style={{
                     fontSize: "13px", background: "none", border: "none", cursor: "pointer",
                     padding: "2px", borderRadius: "4px",
                     opacity: draft.mood === m ? 1 : 0.38,
                     transform: draft.mood === m ? "scale(1.15)" : "scale(1)",
                     transition: "all .15s",
-                  }}>{m}</button>
+                  }}>{m}</RippleButton>
                 ))}
               </div>
 
               <MiniLabel>Weather</MiniLabel>
               <div style={{ display: "flex", gap: "2px", flexWrap: "wrap", marginBottom: "8px" }}>
                 {WEATHERS.map(w => (
-                  <button key={w} type="button" onClick={() => onDraftChange("weather", w)} style={{
+                  <RippleButton key={w} type="button" onClick={() => onDraftChange("weather", w)} style={{
                     fontSize: "13px", background: "none", border: "none", cursor: "pointer",
                     padding: "2px", borderRadius: "4px",
                     opacity: draft.weather === w ? 1 : 0.38,
                     transform: draft.weather === w ? "scale(1.15)" : "scale(1)",
                     transition: "all .15s",
-                  }}>{w}</button>
+                  }}>{w}</RippleButton>
                 ))}
               </div>
 
-              <textarea
-                ref={textareaRef}
-                value={draft.content}
-                onChange={e => onDraftChange("content", e.target.value)}
+              <JournalEditor
+                content={draft.content}
+                onChange={(html) => onDraftChange("content", html)}
                 placeholder="Write what's on your mind today…"
-                style={{
-                  fontFamily: "'Lora',serif", fontSize: "13px", lineHeight: 1.92,
-                  color: "rgba(35,14,3,.8)", background: "transparent",
-                  border: "none", outline: "none", width: "100%",
-                  resize: "none", flex: 1, minHeight: 0,
-                }}
+                autoFocus
               />
 
               {isAiThinking && (
@@ -211,26 +228,26 @@ export function RightPage({
                 borderTop: "1px solid rgba(120,70,20,.1)", flexShrink: 0,
               }}>
                 <span style={{ fontFamily: "'Lora',serif", fontSize: "10px", color: "rgba(100,55,20,.38)", marginRight: "auto" }}>{wc} words</span>
-                <button type="button" onClick={onAiAssist} disabled={isAiThinking || !draft.content.trim()} style={{
+                <RippleButton type="button" onClick={onAiAssist} disabled={isAiThinking || !draft.content.trim()} style={{
                   fontFamily: "'Lora',serif", fontSize: "9px", letterSpacing: "1.5px",
                   textTransform: "uppercase", background: "rgba(80,35,120,.18)",
                   color: "rgba(200,160,255,.65)", border: "1px solid rgba(140,80,220,.2)",
                   padding: "4px 12px", borderRadius: "20px", cursor: "pointer",
                   opacity: isAiThinking || !draft.content.trim() ? 0.3 : 1,
-                }}>✦ AI Assist</button>
-                <button type="button" onClick={onCancel} style={{
+                }}>✦ AI Assist</RippleButton>
+                <RippleButton type="button" onClick={onCancel} style={{
                   fontFamily: "'Lora',serif", fontSize: "9.5px", letterSpacing: "1.5px",
                   textTransform: "uppercase", background: "transparent",
                   color: "rgba(100,55,20,.5)", border: "1px solid rgba(120,70,20,.22)",
                   padding: "5px 12px", borderRadius: "3px", cursor: "pointer",
-                }}>Cancel</button>
-                <button type="button" onClick={onSave} disabled={isSaving} style={{
+                }}>Cancel</RippleButton>
+                <RippleButton type="button" onClick={onSave} disabled={isSaving} shine style={{
                   fontFamily: "'Lora',serif", fontSize: "9.5px", letterSpacing: "1.5px",
                   textTransform: "uppercase", background: "rgba(90,40,10,.82)",
                   color: "rgba(255,215,150,.92)", border: "none",
                   padding: "5px 14px", borderRadius: "3px", cursor: "pointer",
                   boxShadow: "0 2px 8px rgba(0,0,0,.3)",
-                }}>{isSaving ? "Saving…" : "Save"}</button>
+                }}>{isSaving ? "Saving…" : "Save"}</RippleButton>
               </div>
             </>
           ) : (
@@ -257,7 +274,7 @@ export function RightPage({
                 scrollbarWidth: "none",
               }}>
                 {entry.content
-                  ? <div dangerouslySetInnerHTML={{ __html: entry.content }} />
+                  ? <div className="journal-prose" dangerouslySetInnerHTML={{ __html: entry.content }} />
                   : (
                     <div style={{ textAlign: "center", paddingTop: "28px" }}>
                       <span style={{ fontSize: "28px", display: "block", opacity: 0.4, marginBottom: "10px" }}>✒</span>
@@ -294,19 +311,19 @@ export function RightPage({
                 </span>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "auto" }}>
                 {onDeleteEntry && canDeleteEntry && (
-                  <button type="button" onClick={onDeleteEntry} style={{
+                  <RippleButton type="button" onClick={onDeleteEntry} style={{
                     fontFamily: "'Lora',serif", fontSize: "9px", letterSpacing: "1.5px",
                     textTransform: "uppercase", background: "transparent",
                     color: "rgba(140,50,30,.55)", border: "1px solid rgba(140,50,30,.22)",
                     padding: "4px 10px", borderRadius: "3px", cursor: "pointer",
-                  }}>Remove page</button>
+                  }}>Remove page</RippleButton>
                 )}
-                <button type="button" onClick={onStartWriting} style={{
+                <RippleButton type="button" onClick={onStartWriting} style={{
                   fontFamily: "'Lora',serif", fontSize: "9.5px", letterSpacing: "1.5px",
                   textTransform: "uppercase", background: "transparent",
                   color: "rgba(100,55,20,.5)", border: "1px solid rgba(120,70,20,.2)",
                   padding: "4px 11px", borderRadius: "3px", cursor: "pointer",
-                }}>✒ Edit</button>
+                }}>✒ Edit</RippleButton>
                 </div>
               </div>
             </div>

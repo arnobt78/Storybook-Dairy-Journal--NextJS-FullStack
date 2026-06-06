@@ -35,6 +35,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { PageFlipOverlay } from "@/components/journal/PageFlip";
 import { usePageFlip } from "@/hooks/usePageFlip";
+import { RippleButton } from "@/components/ui/ripple-button";
 
 const BOOK_COLOR = "#8b4513";
 
@@ -341,7 +342,7 @@ export function AuthBookShell({ children }: { children: ReactNode }) {
                       }}
                     >
                       No account yet?{" "}
-                      <button
+                      <RippleButton
                         type="button"
                         onClick={goRegister}
                         disabled={authNavBusy}
@@ -357,7 +358,7 @@ export function AuthBookShell({ children }: { children: ReactNode }) {
                         }}
                       >
                         Start your story
-                      </button>
+                      </RippleButton>
                     </p>
                   ) : (
                     <p
@@ -369,7 +370,7 @@ export function AuthBookShell({ children }: { children: ReactNode }) {
                       }}
                     >
                       Already have an account?{" "}
-                      <button
+                      <RippleButton
                         type="button"
                         onClick={goLogin}
                         disabled={authNavBusy}
@@ -385,7 +386,7 @@ export function AuthBookShell({ children }: { children: ReactNode }) {
                         }}
                       >
                         Open your journal
-                      </button>
+                      </RippleButton>
                     </p>
                   )}
                 </div>

@@ -17,7 +17,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { appToast } from "@/lib/app-toast";
 import {
   dispatchOfflineBookSynced,
   dispatchOfflineEntrySynced,
@@ -125,12 +125,12 @@ export function useOfflineSyncQueue() {
         const message = err instanceof Error ? err.message : "Sync failed";
         if (message.includes("409") || message.toLowerCase().includes("conflict")) {
           await removeSyncItem(item.id);
-          toast.error("Offline change conflicted with server — discarded");
+          appToast.offline.conflictDiscarded();
           return "drop";
         }
         if (/failed|4\d\d/i.test(message)) {
           await removeSyncItem(item.id);
-          toast.error(`Could not sync offline change: ${message}`);
+          appToast.offline.syncFailed(message);
           return "drop";
         }
         throw err;
@@ -170,10 +170,7 @@ export function useOfflineSyncQueue() {
 
       if (synced > 0) {
         notifyJournalCacheUpdated(queryClient);
-        toast.success(
-          synced === 1 ? "Synced 1 offline change" : `Synced ${synced} offline changes`,
-          { duration: 2200 },
-        );
+        appToast.offline.syncComplete(synced);
       }
     } catch {
       /* network still flaky — retry on next online event */

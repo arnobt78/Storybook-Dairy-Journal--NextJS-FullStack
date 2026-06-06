@@ -1,26 +1,18 @@
 /**
  * POST /api/ai/assist — sync JSON AI writing fallback.
- *
- * HTTP: POST; returns full text in one JSON response.
- * Auth: session required; 401 without session.user.id.
- * Validation: aiAssistRequestSchema (Zod) — title, content, mood, assistSessionId.
- * Ownership: N/A (draft text only); rate limit keyed by userId + assistSessionId.
+ * Provider chain: Groq → OpenRouter → Anthropic (legacy) → placeholder.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import {
   aiAssistRequestSchema,
   buildAssistPrompt,
-  DEV_PLACEHOLDER,
   type AiAssistResponse,
 } from "@/lib/ai-assist";
 import { consumeAiRateLimit } from "@/lib/ai-rate-limit";
+import { syncAssistCompletion } from "@/lib/ai-provider";
 
-/**
- * POST /api/ai/assist — sync JSON fallback; shares assistSessionId rate slot with stream route.
- */
 export async function POST(req: NextRequest) {
-  /* Session check — AI assist is authenticated-only. */
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" } satisfies AiAssistResponse, {
@@ -37,7 +29,6 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  /* Zod validation — title, content, mood, assistSessionId. */
   const parsed = aiAssistRequestSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
@@ -46,8 +37,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  /* Rate limit — 10 req/min per user; assistSessionId dedupes stream+sync pair. */
-  const rate = consumeAiRateLimit(session.user.id, parsed.data.assistSessionId);
+  const rate = await consumeAiRateLimit(session.user.id, parsed.data.assistSessionId);
   if (!rate.ok) {
     return NextResponse.json(
       { error: `Rate limit exceeded — try again in ${rate.retryAfterSec}s` } satisfies AiAssistResponse,
@@ -55,31 +45,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json({ text: DEV_PLACEHOLDER } satisfies AiAssistResponse);
-  }
-
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 300,
-        messages: [{ role: "user", content: buildAssistPrompt(parsed.data) }],
-      }),
-    });
-
-    if (!res.ok) throw new Error(`Anthropic ${res.status}`);
-
-    const data = (await res.json()) as { content?: { text?: string }[] };
-    const text = data.content?.map((b) => b.text ?? "").join("") ?? "";
-    return NextResponse.json({ text } satisfies AiAssistResponse);
+    const result = await syncAssistCompletion(buildAssistPrompt(parsed.data));
+    return NextResponse.json({
+      text: result.text,
+      meta: { provider: result.provider, usedFallback: result.usedFallback },
+    } satisfies AiAssistResponse & { meta?: object });
   } catch (err) {
     console.error("[AI assist]", err);
     return NextResponse.json({ error: "AI assist failed" } satisfies AiAssistResponse, {

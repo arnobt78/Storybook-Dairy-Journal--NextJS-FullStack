@@ -1,26 +1,13 @@
 /**
- * POST /api/ai/assist/stream — SSE token stream for incremental draft append.
- *
- * HTTP: POST; returns text/event-stream (SSE chunks).
- * Auth: session required; 401 without session.user.id.
- * Validation: aiAssistRequestSchema (Zod) — same contract as sync route.
- * Ownership: N/A; rate limit shared with /api/ai/assist via assistSessionId.
+ * POST /api/ai/assist/stream — SSE token stream (Groq → OpenRouter → Anthropic).
  */
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
-import {
-  aiAssistRequestSchema,
-  buildAssistPrompt,
-  DEV_PLACEHOLDER,
-} from "@/lib/ai-assist";
+import { aiAssistRequestSchema, buildAssistPrompt } from "@/lib/ai-assist";
 import { consumeAiRateLimit } from "@/lib/ai-rate-limit";
+import { streamAssistCompletion } from "@/lib/ai-provider";
 
-/**
- * POST /api/ai/assist/stream — SSE token stream for incremental draft append.
- * Falls back to a single dev placeholder chunk when ANTHROPIC_API_KEY is unset.
- */
 export async function POST(req: NextRequest) {
-  /* Session check — streaming assist requires authenticated user. */
   const session = await auth();
   if (!session?.user?.id) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
@@ -33,7 +20,6 @@ export async function POST(req: NextRequest) {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400 });
   }
 
-  /* Zod validation — mirrors sync route payload shape. */
   const parsed = aiAssistRequestSchema.safeParse(body);
   if (!parsed.success) {
     return new Response(
@@ -42,8 +28,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  /* Rate limit — same slot as sync route when assistSessionId matches. */
-  const rate = consumeAiRateLimit(session.user.id, parsed.data.assistSessionId);
+  const rate = await consumeAiRateLimit(session.user.id, parsed.data.assistSessionId);
   if (!rate.ok) {
     return new Response(
       JSON.stringify({ error: `Rate limit exceeded — try again in ${rate.retryAfterSec}s` }),
@@ -51,87 +36,31 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
   const encoder = new TextEncoder();
+  const prompt = buildAssistPrompt(parsed.data);
 
-  /* ReadableStream — forwards Anthropic SSE deltas as `data: {text}` events. */
   const stream = new ReadableStream({
     async start(controller) {
-      const send = (data: Record<string, string>) => {
+      const send = (data: Record<string, string | boolean>) => {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
       };
 
-      if (!apiKey) {
-        send({ text: DEV_PLACEHOLDER });
-        send({ done: "true" });
-        controller.close();
-        return;
-      }
-
       try {
-        const res = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": apiKey,
-            "anthropic-version": "2023-06-01",
-          },
-          body: JSON.stringify({
-            model: "claude-sonnet-4-20250514",
-            max_tokens: 300,
-            stream: true,
-            messages: [{ role: "user", content: buildAssistPrompt(parsed.data) }],
-          }),
-        });
-
-        if (!res.ok || !res.body) {
-          send({ error: "AI assist failed" });
-          controller.close();
-          return;
-        }
-
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() ?? "";
-
-          for (const line of lines) {
-            if (!line.startsWith("data: ")) continue;
-            const payload = line.slice(6).trim();
-            if (payload === "[DONE]") continue;
-
-            try {
-              const event = JSON.parse(payload) as {
-                type?: string;
-                delta?: { type?: string; text?: string };
-              };
-              if (
-                event.type === "content_block_delta" &&
-                event.delta?.type === "text_delta" &&
-                event.delta.text
-              ) {
-                send({ text: event.delta.text });
-              }
-            } catch {
-              /* skip malformed SSE lines */
-            }
+        for await (const chunk of streamAssistCompletion(prompt)) {
+          if (chunk.error) {
+            send({ error: chunk.error });
+            break;
           }
+          if (chunk.usedFallback) send({ usedFallback: true });
+          if (chunk.text) send({ text: chunk.text });
+          if (chunk.done) send({ done: "true" });
         }
-
-        send({ done: "true" });
-        controller.close();
       } catch (err) {
         console.error("[AI assist stream]", err);
         send({ error: "AI assist failed" });
-        controller.close();
       }
+
+      controller.close();
     },
   });
 

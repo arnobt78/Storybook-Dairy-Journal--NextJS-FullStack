@@ -39,7 +39,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <OfflineSyncProvider>
           {children}
           <Toaster
-            position="bottom-center"
+            position="bottom-right"
+            richColors
+            closeButton
             toastOptions={{
               style: {
                 background: "rgba(35,14,3,.96)",

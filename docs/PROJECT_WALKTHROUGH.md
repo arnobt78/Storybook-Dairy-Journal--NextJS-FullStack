@@ -28,8 +28,13 @@ Deployment target is **Vercel** for the app; `docker-compose.yml` is an optional
 | Validation | **Zod** (`src/lib/validations.ts`) |
 | Client data fetching | **TanStack Query** — `queryKeys.journalSubtree()` invalidation on all journal CRUD + auth flows |
 | Animations | Custom page-flip hook + overlay (`usePageFlip`, `PageFlip`) |
-| Toasts | **Sonner** |
-| AI | `/api/ai/assist` (sync) + `/api/ai/assist/stream` (SSE); Zod + rate limit; Anthropic key server-only |
+| Toasts | **Sonner** via `appToast` (icon + title + subtitle, bottom-right) |
+| AI | Groq → OpenRouter → Anthropic legacy; `/api/ai/assist` + `/stream`; Upstash Redis rate limit (in-memory fallback) |
+| Realtime | Upstash Redis pub/sub + `GET /api/journal/events` SSE; `useJournalRealtime` invalidates `journalSubtree` |
+| Editor | **TipTap** `JournalEditor` (dynamic `ssr:false` in RightPage) |
+| Search | `GET /api/search` — Prisma scoped; wired to ⌘K `CommandPalette` |
+| Themes | `BOOK_THEMES` + `useBookTheme` — page CSS vars per `JournalBook.theme` |
+| UX | `RippleButton` global click effect; `DashboardCommandProvider` (palette + realtime bridge) |
 | Images | `SafeImage` for remote avatars; `next.config` `remotePatterns` (Google, GitHub, Robohash) |
 | Offline | IndexedDB drafts + sync queue (`patchEntry`, `postEntry`, `patchBook`, `postBook`); `OfflineSyncContext`; optimistic cache + `notifyJournalCacheUpdated`; shelf hover prefetch |
 | Production guardrails | `next.config` + `vercel.json` security/cache headers; `robots.ts`; dashboard `noindex`; `force-dynamic` on dashboard/journal pages |
@@ -53,8 +58,10 @@ src/app/
   api/
     auth/[...nextauth]/       # NextAuth GET/POST
     auth/register/            # Email registration + seed book/entry
-    books/, books/[bookId]/   # Journal CRUD
+    books/, books/[bookId]/   # Journal CRUD (+ afterJournalMutation publish)
     entries/, entries/[entryId]/
+    search/                   # Scoped entry search (GET)
+    journal/events/           # SSE realtime stream (force-dynamic)
 
 src/lib/
   db.ts                       # PrismaClient singleton (dev HMR guard)
@@ -67,6 +74,12 @@ src/lib/
   journal-slug.ts             # resolveUniqueBookSlug / resolveUniqueEntrySlug on PATCH title change
   journal-cache-optimistic.ts # optimistic shelf/reader patches for offline writes
   journal-cache-notify.ts     # notifyJournalCacheUpdated (invalidate subtree; refetchType none when offline)
+  journal-pubsub.ts           # Redis publish + list buffer for SSE poll
+  journal-mutation.ts         # afterJournalMutation — called post-Prisma write
+  redis.ts                    # Upstash singleton (null when env missing)
+  ai-provider.ts              # Groq → OpenRouter → Anthropic
+  app-toast.tsx               # Unified Sonner presets
+  search.ts                   # Search query Zod + SearchHit type
   offline/                    # IndexedDB drafts + sync queue + offline-journal-actions
   site-metadata.ts            # Central SEO metadata for root layout
   ai-assist.ts, ai-rate-limit.ts
@@ -84,9 +97,21 @@ src/hooks/
   useOfflineEntryDraft.ts     # IndexedDB draft persist/restore
   useOfflineIdRemap.ts        # temp entry/book id → server cuid after sync
   useJournalPrefetch.ts       # shelf hover → prefetch route + bookDetail query
+  useJournalRealtime.ts       # EventSource → notifyJournalCacheUpdated (multi-tab)
+  useBookTheme.ts             # CSS vars from JournalBook.theme
 
 src/components/ui/
   safe-image.tsx              # next/image + fallbackSrc (Robohash) + native img fallback
+  ripple-button.tsx           # Global click ripple + optional cta-shine
+  command.tsx                 # cmdk primitives for palette
+
+src/components/editor/
+  JournalEditor.tsx           # TipTap — StarterKit, Placeholder, Typography
+
+src/components/journal/
+  CommandPalette.tsx          # ⌘K search + navigate + actions
+src/components/layout/
+  DashboardCommandProvider.tsx # Mounts palette + JournalRealtimeBridge
 
 src/components/auth/
   AuthOAuthSection.tsx        # "or" + Google below primary CTA (login + register)
@@ -151,7 +176,11 @@ API routes consistently call `await auth()` and check `session?.user?.id` before
 5. Temp ids (`offline-entry-*`, `offline-book-*`) remap to server cuids via `useOfflineIdRemap` + sync events — reader focus preserved after sync.
 6. **DELETE UI** — `ConfirmDialog` + `journalSubtree` invalidation.
 7. **PATCH book UI** — `BookEditorModal` on shelf + reader; slug sync on title change (`journal-slug.ts`).
-8. **AI assist** — SSE stream + sync fallback; `assistSessionId` dedupes rate limit (10/min, in-memory MVP).
+8. **AI assist** — Groq primary; SSE stream + sync fallback; `assistSessionId` dedupes; Redis rate limit (10/min) with in-memory dev fallback.
+9. **TipTap** — write mode uses `JournalEditor`; read mode `.journal-prose` HTML.
+10. **Realtime** — other tabs receive SSE events → `notifyJournalCacheUpdated` (debounced toast).
+11. **Themes** — `BookEditorModal` theme picker; `useBookTheme` on spread wrapper.
+12. **⌘K** — `CommandPalette` search + journal navigation.
 
 ### 6.4 API summary
 
@@ -164,6 +193,8 @@ API routes consistently call `await auth()` and check `session?.user?.id` before
 | POST | `/api/entries` | Create entry (checks book ownership) |
 | POST | `/api/ai/assist` | Sync AI assist (rate limited) |
 | POST | `/api/ai/assist/stream` | SSE AI assist stream |
+| GET | `/api/search` | Entry search (title/content, scoped) |
+| GET | `/api/journal/events` | SSE journal mutation stream |
 | GET | `/api/health` | Health check |
 
 ---
@@ -178,6 +209,8 @@ API routes consistently call `await auth()` and check `session?.user?.id` before
 | Auth login/register/OAuth | `journalSubtree` invalidation |
 | Sign-out | `queryClient.clear()` before `signOut()` |
 | Shelf hover | `useJournalPrefetch` — route + `bookDetail` prefetch |
+| Other-tab mutation | SSE → `useJournalRealtime` → `notifyJournalCacheUpdated` |
+| Server write | `afterJournalMutation` → Redis publish (fire-and-forget) |
 
 SSR: dashboard/journal pages fetch server-side; client `useQuery` uses SSR `initialData` with `staleTime: 60_000`.
 
@@ -202,28 +235,24 @@ flowchart LR
 
 ---
 
-## 9. Audit notes (2026-06-01)
+## 9. Audit notes (2026-06-01 — C2)
 
 ### Verified passing
 
-- `npm run lint` — pass
-- `npm run typecheck` — pass
-- `npm run build` — pass
-- Query invalidation wired on all journal CRUD + auth + offline paths
-- Offline: drafts, queue (4 types), remap, badge, optimistic cache
-- Guardrails: headers, robots, noindex, force-dynamic, SafeImage
-- Educational walkthrough comments across `src/` (76 files)
-- `README.md` — full setup + learning guide
+- `npm run lint` / `typecheck` / `build` — pass
+- C2 waves 1–8: Redis, AI provider, toasts, ripple, TipTap, SSE realtime, search, ⌘K palette, themes
+- Server `afterJournalMutation` on all books/entries routes
+- Client `journalSubtree` invalidation on CRUD + auth + offline + SSE
+- `force-dynamic` on dashboard/auth/journal pages + search/events APIs
+- `.agile-v/` CR-0003; REQ-0013–0018 → implemented
 
-### Known gaps (non-blocking for C1)
+### Minor gaps (non-blocking)
 
-1. **Automated tests** — no Vitest/Playwright files yet (Gate 2).
-2. **AI rate limit** — in-memory only; resets on serverless cold start.
-3. **TipTap** — in dependencies; UI still uses HTML content / textarea pattern in RightPage.
-4. **Future** — Redis/Upstash, BullMQ, multi-tab SSE pub/sub.
-5. **Demo login** — on by default; `SHOW_DEMO_LOGIN=false` for production hide.
-6. **Python** — N/A (TypeScript full-stack only).
-7. **Manual Vercel** — enable Bot Protection + AI Bots in dashboard.
+1. **Automated tests** — no Vitest/Playwright (Gate 2).
+2. **Command palette** — no in-palette theme toggle (themes via BookEditorModal only).
+3. **SSE** — Upstash list poll (not blocking SUBSCRIBE); needs `UPSTASH_*` for prod multi-tab.
+4. **Demo login** — on by default; `SHOW_DEMO_LOGIN=false` for prod.
+5. **Python** — N/A (TypeScript full-stack).
 
 ---
 
@@ -274,8 +303,8 @@ That is the full loop: **terminal → Postgres in Docker → DB + user + schema 
 - `docs/AUTH_UI_IMPLEMENTATION_GUIDE.md` — OAuth flicker, avatar, session patterns.
 - `docs/DROPDOWN_TEST_CREDENTIALS_DOCS.md` — demo account + NextAuth reference.
 - `docker-compose.yml` — optional local Postgres only (not used for Vercel deploy).
-- `.agile-v/` — Agile V C1 traceability (REQ-0001–0027).
+- `.agile-v/` — Agile V traceability (C2: CR-0003, REQ-0013–0018, ART-0049–0062).
 
 ---
 
-*Last reviewed: 2026-06-01 — C1 audit; lint/typecheck/build pass.*
+*Last reviewed: 2026-06-01 — C2 platform upgrade audit; lint/typecheck/build pass.*

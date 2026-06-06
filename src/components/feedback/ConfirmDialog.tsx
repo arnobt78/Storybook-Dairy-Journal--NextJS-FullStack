@@ -9,6 +9,7 @@
  *  `variant="dark"` matches journal nav; `"paper"` matches shelf modals.
  */
 import type { CSSProperties, ReactNode } from "react";
+import { RippleButton } from "@/components/ui/ripple-button";
 
 export type ConfirmDialogProps = {
   open: boolean;
@@ -94,22 +95,22 @@ export function ConfirmDialog({
           {description}
         </p>
         <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-          <button
+          <RippleButton
             type="button"
             disabled={loading}
             onClick={onCancel}
             style={cancelBtn(isDark)}
           >
             {cancelLabel}
-          </button>
-          <button
+          </RippleButton>
+          <RippleButton
             type="button"
             disabled={loading}
             onClick={onConfirm}
             style={confirmBtn(isDark, loading)}
           >
             {loading ? "Removing…" : confirmLabel}
-          </button>
+          </RippleButton>
         </div>
       </div>
     </div>

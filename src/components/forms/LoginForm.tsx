@@ -19,10 +19,11 @@ import { createPortal } from "react-dom";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { appToast } from "@/lib/app-toast";
 import { queryKeys } from "@/lib/query-keys";
 
 import { AuthOAuthSection } from "@/components/auth/AuthOAuthSection";
+import { RippleButton } from "@/components/ui/ripple-button";
 import { TEST_ACCOUNT_EMAIL, TEST_ACCOUNT_PASSWORD } from "@/constants/auth";
 
 /** Test account seeded in the database for demos — matches api/auth/register seed logic */
@@ -99,7 +100,8 @@ export function LoginForm({ googleEnabled = false, demoLoginEnabled = false }: L
       if (res?.error) {
         setError("Invalid email or password");
       } else {
-        toast.success("Welcome back!");
+        const displayName = form.email.split("@")[0] || "Reader";
+        appToast.auth.welcomeBack(displayName);
         /* Drop stale journal payloads from any prior session (shelf + every open book cache). */
         await queryClient.invalidateQueries({ queryKey: queryKeys.journalSubtree() });
         router.push("/dashboard");
@@ -129,7 +131,7 @@ export function LoginForm({ googleEnabled = false, demoLoginEnabled = false }: L
         >
           Test Account To Login With
         </p>
-        <button
+        <RippleButton
           ref={demoTriggerRef}
           type="button"
           className="w-full"
@@ -144,7 +146,7 @@ export function LoginForm({ googleEnabled = false, demoLoginEnabled = false }: L
           }}
         >
           Select Demo Account ▾
-        </button>
+        </RippleButton>
         {showTestMenu &&
           menuBox &&
           typeof document !== "undefined" &&
@@ -163,7 +165,7 @@ export function LoginForm({ googleEnabled = false, demoLoginEnabled = false }: L
               overflow: "hidden", boxSizing: "border-box",
             }}
           >
-            <button
+            <RippleButton
               type="button"
               onClick={fillTestCredentials}
               style={{
@@ -177,8 +179,8 @@ export function LoginForm({ googleEnabled = false, demoLoginEnabled = false }: L
               onMouseLeave={e => (e.currentTarget.style.background = "none")}
             >
               Test User ({TEST_EMAIL})
-            </button>
-            <button
+            </RippleButton>
+            <RippleButton
               type="button"
               onClick={clearCredentialFields}
               style={{
@@ -195,7 +197,7 @@ export function LoginForm({ googleEnabled = false, demoLoginEnabled = false }: L
               onMouseLeave={e => (e.currentTarget.style.background = "none")}
             >
               Clear Section
-            </button>
+            </RippleButton>
           </div>,
           document.body
         )}
@@ -228,8 +230,8 @@ export function LoginForm({ googleEnabled = false, demoLoginEnabled = false }: L
         </p>
       )}
 
-      <button
-        type="submit" disabled={loading}
+      <RippleButton
+        type="submit" disabled={loading} shine
         style={{
           width: "100%", fontFamily: "'Lora',serif", fontSize: "11px",
           letterSpacing: "2px", textTransform: "uppercase",
@@ -240,7 +242,7 @@ export function LoginForm({ googleEnabled = false, demoLoginEnabled = false }: L
         }}
       >
         {loading ? "Opening…" : "Open My Journal"}
-      </button>
+      </RippleButton>
 
       <AuthOAuthSection googleEnabled={!!googleEnabled} disabled={loading} variant="login" />
     </form>

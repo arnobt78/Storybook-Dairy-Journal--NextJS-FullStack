@@ -11,13 +11,14 @@
  */
 import { useCallback, useState } from "react";
 import { signIn } from "next-auth/react";
-import { toast } from "sonner";
+import { appToast } from "@/lib/app-toast";
 import {
   AUTH_STATE_KEY,
   OAUTH_CALLBACK_URL,
   OAUTH_PENDING_KEY,
 } from "@/constants/auth";
 import { GoogleIcon } from "@/components/auth/GoogleIcon";
+import { RippleButton } from "@/components/ui/ripple-button";
 
 type GoogleSignInButtonProps = {
   disabled?: boolean;
@@ -47,13 +48,13 @@ export function GoogleSignInButton({
         localStorage.removeItem(AUTH_STATE_KEY);
         localStorage.removeItem(OAUTH_PENDING_KEY);
       }
-      toast.error("Could not open Google sign-in. Please try again.");
+      appToast.auth.googleError();
       setLoading(false);
     }
   }, [disabled, loading]);
 
   return (
-    <button
+    <RippleButton
       type="button"
       disabled={disabled || loading}
       onClick={handleGoogleSignIn}
@@ -89,6 +90,6 @@ export function GoogleSignInButton({
     >
       <GoogleIcon size={18} />
       <span>{loading ? "Redirecting…" : label}</span>
-    </button>
+    </RippleButton>
   );
 }

@@ -11,6 +11,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createBookSchema } from "@/lib/validations";
 import { formatEntryDate, readingTime, slugify, stringifyTags, wordCount } from "@/lib/utils";
+import { afterJournalMutation } from "@/lib/journal-mutation";
 
 export async function GET() {
   /* Session check — only authenticated users see their shelf. */
@@ -85,6 +86,8 @@ export async function POST(req: NextRequest) {
     });
     return created;
   });
+
+  await afterJournalMutation(session.user.id, "book_created", { bookId: book.id });
 
   return NextResponse.json({ success: true, data: book }, { status: 201 });
 }

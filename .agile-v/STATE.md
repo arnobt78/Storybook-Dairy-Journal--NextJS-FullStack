@@ -6,9 +6,9 @@
 |-------|-------|
 | **Project** | storybook-journal (StoryBook Journal SaaS) |
 | **Repository** | https://github.com/arnobt78/Storybook-Dairy-Journal--NextJS-FullStack |
-| **Cycle** | C1 |
-| **Revision** | C1-bootstrap-2026-06-01-r2 |
-| **Last commit** | `72bb670` — docs, SEO, walkthrough comments, audit |
+| **Cycle** | C2 |
+| **Revision** | C2-platform-upgrade-2026-06-01 |
+| **Last commit** | (pending) — C2 platform upgrade |
 | **Current Stage** | 4 — Verification (static PASS; e2e pending) |
 | **Stage Status** | `IN_PROGRESS` |
 | **Last Gate** | Gate 1 — **Approved** (GATE-0001, GATE-0003) |
@@ -38,7 +38,12 @@
 | Book UX + flip | REQ-0004–0005 | ✅ |
 | Nav + health | REQ-0006 | ✅ |
 | Query cache | REQ-0007 | ✅ |
-| AI assist + stream | REQ-0010 | ✅ |
+| AI assist + stream | REQ-0010 | ✅ (Groq→OpenRouter + Redis rate limit) |
+| TipTap editor | REQ-0013 | ✅ |
+| Realtime SSE sync | REQ-0014 | ✅ |
+| Entry search | REQ-0016 | ✅ |
+| Command palette | REQ-0017 | ✅ |
+| Book themes | REQ-0018 | ✅ |
 | Offline drafts + sync | REQ-0015 | ✅ |
 | Guardrails + SafeImage | REQ-0028 | ✅ |
 | SEO metadata | REQ-0023 | ✅ |
@@ -47,7 +52,7 @@
 
 ## Backlog (planned)
 
-REQ-0013 TipTap · REQ-0014 realtime · REQ-0016 search · REQ-0017 command palette · REQ-0018 themes · REQ-0021 automated tests
+REQ-0021 automated tests (Vitest + Playwright e2e)
 
 ## Infinity Loop
 

@@ -34,7 +34,7 @@ export function LeftPage({ prevEntry, entries, currentIdx, pageNumber, onNavigat
     <div style={{
       width: "var(--page-w, 360px)", height: "var(--page-h, 540px)",
       position: "relative",
-      background: "linear-gradient(to right, #ede1cc 0%, #f4ecda 60%, #ede0c8 100%)",
+      background: "var(--theme-page-left, linear-gradient(to right, #ede1cc 0%, #f4ecda 60%, #ede0c8 100%))",
       borderRadius: "4px 0 0 4px",
       boxShadow: "inset -10px 0 24px rgba(120,70,20,.12), inset 3px 0 8px rgba(200,160,100,.08)",
       flexShrink: 0, overflow: "hidden",

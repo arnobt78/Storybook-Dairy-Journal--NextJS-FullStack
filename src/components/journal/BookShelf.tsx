@@ -13,7 +13,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { appToast } from "@/lib/app-toast";
 import type { JournalBook } from "@/types";
 import { bookToFormValues, type BookFormValues } from "@/types/book-form";
 import { queryKeys } from "@/lib/query-keys";
@@ -33,6 +33,7 @@ import {
 } from "@/lib/offline/offline-journal-actions";
 import { ConfirmDialog } from "@/components/feedback/ConfirmDialog";
 import { BookEditorModal } from "@/components/journal/BookEditorModal";
+import { RippleButton } from "@/components/ui/ripple-button";
 
 interface BookShelfProps {
   books: (JournalBook & { _count?: { entries: number } })[];
@@ -78,7 +79,7 @@ export function BookShelf({ books: initialBooks, userName }: BookShelfProps) {
           refreshPendingCount: refreshCount,
         });
         setShowCreate(false);
-        toast.info("Journal saved offline — will sync when online");
+        appToast.offline.queued("Journal");
         router.push(`/journal/${tempId}`);
         return;
       }
@@ -86,7 +87,7 @@ export function BookShelf({ books: initialBooks, userName }: BookShelfProps) {
       await createJournalBook(values);
       await invalidateJournal();
       setShowCreate(false);
-      toast.success("Journal created");
+      appToast.journal.bookCreated();
     } catch (err) {
       if (isOfflineOrNetworkError(err)) {
         try {
@@ -96,13 +97,13 @@ export function BookShelf({ books: initialBooks, userName }: BookShelfProps) {
             refreshPendingCount: refreshCount,
           });
           setShowCreate(false);
-          toast.info("Journal saved offline — will sync when online");
+          appToast.offline.queued("Journal");
           router.push(`/journal/${tempId}`);
         } catch {
-          toast.error("Failed to create journal offline");
+          appToast.journal.saveFailed("create journal offline");
         }
       } else {
-        toast.error("Failed to create journal");
+        appToast.journal.saveFailed("create journal");
       }
     } finally {
       setIsSaving(false);
@@ -122,14 +123,14 @@ export function BookShelf({ books: initialBooks, userName }: BookShelfProps) {
           refreshPendingCount: refreshCount,
         });
         setEditTarget(null);
-        toast.info("Journal saved offline — will sync when online");
+        appToast.offline.queued("Journal");
         return;
       }
 
       await updateJournalBook(editTarget.id, values);
       await invalidateJournal();
       setEditTarget(null);
-      toast.success("Journal updated");
+      appToast.journal.bookUpdated();
     } catch (err) {
       if (isOfflineOrNetworkError(err)) {
         try {
@@ -140,12 +141,12 @@ export function BookShelf({ books: initialBooks, userName }: BookShelfProps) {
             refreshPendingCount: refreshCount,
           });
           setEditTarget(null);
-          toast.info("Journal saved offline — will sync when online");
+          appToast.offline.queued("Journal");
         } catch {
-          toast.error("Failed to save journal offline");
+          appToast.journal.saveFailed("save journal offline");
         }
       } else {
-        toast.error("Failed to update journal");
+        appToast.journal.saveFailed("update journal");
       }
     } finally {
       setIsSaving(false);
@@ -158,10 +159,10 @@ export function BookShelf({ books: initialBooks, userName }: BookShelfProps) {
     try {
       await deleteJournalBook(deleteTarget.id);
       await invalidateJournal();
-      toast.success("Journal removed");
+      appToast.journal.bookRemoved();
       setDeleteTarget(null);
     } catch {
-      toast.error("Failed to remove journal");
+      appToast.journal.saveFailed("remove journal");
     } finally {
       setIsDeleting(false);
     }
@@ -375,7 +376,7 @@ function BookSpine({
         gap: "10px",
       }}
     >
-      <button
+      <RippleButton
         type="button"
         aria-label={`Edit ${book.title}`}
         onClick={(e) => {
@@ -401,8 +402,8 @@ function BookSpine({
         }}
       >
         ✎
-      </button>
-      <button
+      </RippleButton>
+      <RippleButton
         type="button"
         aria-label={`Remove ${book.title}`}
         onClick={(e) => {
@@ -428,7 +429,7 @@ function BookSpine({
         }}
       >
         ×
-      </button>
+      </RippleButton>
       <div
         onClick={onClick}
         style={{

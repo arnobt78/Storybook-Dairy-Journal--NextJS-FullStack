@@ -26,6 +26,7 @@ import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { signOut } from "next-auth/react";
 import { Activity, FileText, LogOut } from "lucide-react";
+import { RippleButton } from "@/components/ui/ripple-button";
 
 import { AUTH_STATE_KEY, OAUTH_PENDING_KEY } from "@/constants/auth";
 import {
@@ -36,6 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SafeImage } from "@/components/ui/safe-image";
+import { appToast } from "@/lib/app-toast";
 import { useOfflineSync } from "@/context/OfflineSyncContext";
 
 interface DashboardNavProps {
@@ -64,6 +66,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
    */
   const handleSignOut = async () => {
     if (signingOut) return;
+    appToast.auth.goodbye(displayName);
     setSigningOut(true);
     setClosing(true);
 
@@ -222,7 +225,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
           )}
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
-              <button
+              <RippleButton
                 type="button"
                 aria-label="Open account menu"
                 disabled={signingOut}
@@ -245,7 +248,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
                     display: "block",
                   }}
                 />
-              </button>
+              </RippleButton>
             </DropdownMenuTrigger>
 
             <DropdownMenuContent

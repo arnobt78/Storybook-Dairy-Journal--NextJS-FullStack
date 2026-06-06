@@ -52,12 +52,23 @@
 | ART-0046 | C1 | lib | `src/lib/site-metadata.ts` | REQ-0023 | implemented |
 | ART-0047 | C1 | meta | `src/app/robots.ts` | REQ-0023, REQ-0028 | implemented |
 | ART-0048 | C1 | ui+config | `src/components/ui/safe-image.tsx`, `vercel.json` | REQ-0028 | implemented |
+| ART-0049 | C2 | lib | `src/lib/redis.ts` | REQ-0014, REQ-0010 | implemented |
+| ART-0050 | C2 | lib | `src/lib/ai-rate-limit.ts` (Upstash) | REQ-0010 | implemented |
+| ART-0051 | C2 | lib | `src/lib/ai-provider.ts` (Groq→OpenRouter) | REQ-0010 | implemented |
+| ART-0052 | C2 | lib+ui | `src/lib/app-toast.tsx`, `src/types/toast.ts` | REQ-0008 | implemented |
+| ART-0053 | C2 | ui | `src/components/ui/ripple-button.tsx` | REQ-0005 | implemented |
+| ART-0054 | C2 | ui | `src/components/ui/command.tsx` | REQ-0017 | implemented |
+| ART-0055 | C2 | ui | `src/components/editor/JournalEditor.tsx` | REQ-0013 | implemented |
+| ART-0056 | C2 | lib | `src/lib/journal-pubsub.ts`, `journal-mutation.ts` | REQ-0014 | implemented |
+| ART-0057 | C2 | api | `src/app/api/journal/events/route.ts` | REQ-0014 | implemented |
+| ART-0058 | C2 | hook | `src/hooks/useJournalRealtime.ts`, `JournalRealtimeBridge.tsx` | REQ-0014 | implemented |
+| ART-0059 | C2 | api+lib | `src/app/api/search/route.ts`, `src/lib/search.ts` | REQ-0016 | implemented |
+| ART-0060 | C2 | ui | `src/components/journal/CommandPalette.tsx` | REQ-0017 | implemented |
+| ART-0061 | C2 | layout | `src/components/layout/DashboardCommandProvider.tsx` | REQ-0017 | implemented |
+| ART-0062 | C2 | constants+hook | `src/constants/themes.ts`, `useBookTheme.ts` | REQ-0018 | implemented |
 
 ## Planned artifacts (backlog)
 
 | ART-ID | Linked REQ | Notes |
 |--------|------------|-------|
-| ART-0100 | REQ-0013 | TipTap editor module |
-| ART-0101 | REQ-0014 | Realtime sync service |
-| ART-0103 | REQ-0016 | Search API + UI |
 | ART-0104 | REQ-0021 | Vitest + Playwright harness |

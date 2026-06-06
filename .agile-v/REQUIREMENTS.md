@@ -115,19 +115,21 @@ Traceability source of truth. Status: `approved [C1]` = accepted at Gate 1. `imp
 
 ---
 
-## Stage 1 — Planned backlog (REQ-0013–0018)
+## Stage 1 — Platform backlog (REQ-0013–0018)
 
 ### REQ-0013 — Rich text editor (TipTap)
 
-- **Status:** planned 📋
+- **Status:** implemented · `approved [C2]` (CR-0003)
 - **Requirement:** Entry content SHALL support rich markdown editing (TipTap) per product vision.
-- **Verification Criteria:** TC-0015 (future).
+- **Verification Criteria:** TC-0015 — static PASS (JournalEditor + dynamic import ssr:false).
+- **Artifacts:** ART-0055
 
 ### REQ-0014 — Realtime multi-tab sync
 
-- **Status:** planned 📋
+- **Status:** implemented · `approved [C2]` (CR-0003)
 - **Requirement:** Entry changes SHALL propagate across tabs/devices via Redis pub/sub or SSE.
-- **Verification Criteria:** TC-0016 (future).
+- **Verification Criteria:** TC-0016 — static PASS (journal-pubsub, SSE route, useJournalRealtime).
+- **Artifacts:** ART-0056–0058
 
 ### REQ-0015 — Offline-first drafts & sync queue
 
@@ -140,21 +142,24 @@ Traceability source of truth. Status: `approved [C1]` = accepted at Gate 1. `imp
 
 ### REQ-0016 — Full-text search
 
-- **Status:** planned 📋
+- **Status:** implemented · `approved [C2]` (CR-0003)
 - **Requirement:** Users SHALL search entries by title, content, tags, mood, date, book.
-- **Verification Criteria:** TC-0018 (future).
+- **Verification Criteria:** TC-0018 — static PASS (GET /api/search + CommandPalette integration).
+- **Artifacts:** ART-0059
 
 ### REQ-0017 — Command palette & keyboard UX
 
-- **Status:** planned 📋
+- **Status:** implemented · `approved [C2]` (CR-0003)
 - **Requirement:** Power users SHALL navigate via command palette and shortcuts.
-- **Verification Criteria:** TC-0019 (future).
+- **Verification Criteria:** TC-0019 — static PASS (⌘K CommandPalette + DashboardCommandProvider).
+- **Artifacts:** ART-0060–0061
 
 ### REQ-0018 — Theming (journal skins)
 
-- **Status:** planned 📋
+- **Status:** implemented · `approved [C2]` (CR-0003)
 - **Requirement:** Books SHALL support cover themes (warm paper, dark academia, etc.).
-- **Verification Criteria:** TC-0020 (future).
+- **Verification Criteria:** TC-0020 — static PASS (BOOK_THEMES, useBookTheme, BookEditorModal picker).
+- **Artifacts:** ART-0062
 
 ---
 

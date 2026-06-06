@@ -14,6 +14,7 @@ export type BookFormValues = {
   description: string;
   coverColor: string;
   coverEmoji: string;
+  theme: string;
 };
 
 export const DEFAULT_BOOK_FORM: BookFormValues = {
@@ -21,6 +22,7 @@ export const DEFAULT_BOOK_FORM: BookFormValues = {
   description: "",
   coverColor: "#8b4513",
   coverEmoji: "📖",
+  theme: "warm-paper",
 };
 
 /** Map a JournalBook row into editor defaults for PATCH flows */
@@ -29,11 +31,13 @@ export function bookToFormValues(book: {
   description?: string | null;
   coverColor: string;
   coverEmoji: string;
+  theme?: string;
 }): BookFormValues {
   return {
     title: book.title,
     description: book.description ?? "",
     coverColor: book.coverColor,
     coverEmoji: book.coverEmoji,
+    theme: book.theme ?? "warm-paper",
   };
 }

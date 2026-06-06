@@ -19,7 +19,7 @@
  */
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { appToast } from "@/lib/app-toast";
 import { useOfflineSync } from "@/context/OfflineSyncContext";
 import { queryKeys } from "@/lib/query-keys";
 import {
@@ -93,10 +93,10 @@ export function useAutoSave({
             payload,
             refreshPendingCount: refreshCount,
           });
-          toast.info("Saved offline — will sync when online", { duration: 2000 });
+          appToast.offline.queued("Changes");
           onSaveSuccess?.();
         } catch {
-          toast.error("Failed to save offline");
+          appToast.journal.saveFailed("save offline");
         } finally {
           isSaving.current = false;
         }
@@ -115,10 +115,7 @@ export function useAutoSave({
         void queryClient.invalidateQueries({ queryKey: queryKeys.journalSubtree() });
         onSaveSuccess?.();
 
-        toast.success("Saved", {
-          duration: 1200,
-          style: { fontSize: "11px" },
-        });
+        appToast.journal.autosaved();
       } catch (err) {
         if (isOfflineOrNetworkError(err)) {
           try {
@@ -129,13 +126,13 @@ export function useAutoSave({
               payload,
               refreshPendingCount: refreshCount,
             });
-            toast.info("Saved offline — will sync when online", { duration: 2000 });
+            appToast.offline.queued("Changes");
             onSaveSuccess?.();
           } catch {
-            toast.error("Failed to save offline");
+            appToast.journal.saveFailed("save offline");
           }
         } else {
-          toast.error("Failed to save — will retry");
+          appToast.journal.saveFailed("save");
         }
       } finally {
         isSaving.current = false;

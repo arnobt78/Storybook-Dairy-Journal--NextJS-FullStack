@@ -13,6 +13,7 @@ import { prisma } from "@/lib/db";
 import { resolveUniqueBookSlug } from "@/lib/journal-slug";
 import { updateBookSchema } from "@/lib/validations";
 import { parseTags } from "@/lib/utils";
+import { afterJournalMutation } from "@/lib/journal-mutation";
 
 export async function GET(
   _req: NextRequest,
@@ -103,6 +104,8 @@ export async function PATCH(
     return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
   }
 
+  await afterJournalMutation(session.user.id, "book_updated", { bookId });
+
   return NextResponse.json({ success: true, message: "Updated" });
 }
 
@@ -126,6 +129,8 @@ export async function DELETE(
   if (result.count === 0) {
     return NextResponse.json({ success: false, message: "Not found" }, { status: 404 });
   }
+
+  await afterJournalMutation(session.user.id, "book_deleted", { bookId });
 
   return NextResponse.json({ success: true, message: "Deleted" });
 }
