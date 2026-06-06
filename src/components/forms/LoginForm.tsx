@@ -165,6 +165,9 @@ export function LoginForm({ googleEnabled = false, demoLoginEnabled = false }: L
                   <AvatarRing seed={TEST_EMAIL} size={28} unoptimized />
                   <span className="demo-menu-row__inline" style={{ fontSize: "12px" }}>
                     <strong>Test User</strong>
+                    <span className="demo-menu-row__sep" aria-hidden>
+                      ·
+                    </span>
                     <span style={{ opacity: 0.65, fontSize: "11px" }}>{TEST_EMAIL}</span>
                   </span>
                 </DemoAccountMenuRow>
